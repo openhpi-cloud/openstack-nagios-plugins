@@ -24,10 +24,11 @@ Counts the assigned IPs (= used + unused). This corresponds to the
 output of 'neutron floatingip-list'.
 """
 
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -37,6 +38,15 @@ class NeutronFloatingIPs(osnag.Resource):
     """
     Determines the number of assigned (used and unused) floating ip's
     """
+
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
+
+        check.add(
+            ScalarContext("assigned", args.warn, args.critical),
+            ScalarContext("used"),
+            osnag.Summary(show=["assigned", "used"]),
+        )
 
     def probe(self):
         neutron = client.Client("2.0", session=self.session)
@@ -55,36 +65,25 @@ class NeutronFloatingIPs(osnag.Resource):
             Metric("used", used, min=0),
         ]
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:200",
-        help="return warning if number of assigned floating ip's is outside range (default: 0:200, warn if more than 200 are used)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default="0:230",
-        help="return critical if number of assigned floating ip's is outside RANGE (default 0:230, critical if more than 230 are used)",
-    )
-
-    args = argp.parse_args()
-
-    check = Check(
-        NeutronFloatingIPs(),
-        ScalarContext("assigned", args.warn, args.critical),
-        ScalarContext("used"),
-        osnag.Summary(show=["assigned", "used"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="0:200",
+            help="return warning if number of assigned floating ip's is outside range (default: 0:200, warn if more than 200 are used)",
+        )
+        options.add_argument(
+            "-c",
+            "--critical",
+            metavar="RANGE",
+            default="0:230",
+            help="return critical if number of assigned floating ip's is outside RANGE (default 0:230, critical if more than 230 are used)",
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(NeutronFloatingIPs)

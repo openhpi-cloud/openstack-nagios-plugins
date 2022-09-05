@@ -20,10 +20,11 @@ Nagios/Icinga plugin to check available IPs
 This corresponds to the output of 'openstack ip availabilities show'.
 """
 
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -34,13 +35,18 @@ class NeutronNetworkIPAvailability(osnag.Resource):
     Determines the number of total and used neutron network ip's
     """
 
-    def __init__(self, args):
-        super().__init__()
-        self.network_uuid = args.network_uuid
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
+
+        check.add(
+            ScalarContext("total"),
+            ScalarContext("used", args.warn, args.critical),
+            osnag.Summary(show=["total", "used"]),
+        )
 
     def probe(self):
         neutron = client.Client("2.0", session=self.session)
-        result = neutron.show_network_ip_availability(self.network_uuid)
+        result = neutron.show_network_ip_availability(self.args.network_uuid)
         net_ip = result["network_ip_availability"]
 
         return [
@@ -48,38 +54,31 @@ class NeutronNetworkIPAvailability(osnag.Resource):
             Metric("used", net_ip["used_ips"], min=0),
         ]
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:200",
-        help="return warning if number of used ip's is outside range (default: 0:200, warn if more than 200 are used)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default="0:230",
-        help="return critical if number of used ip's is outside RANGE (default 0:230, critical if more than 230 are used)",
-    )
-    argp.add_argument(
-        "-n", "--network_uuid", required=True, help="network_uuid to check"
-    )
-    args = argp.parse_args()
-
-    check = Check(
-        NeutronNetworkIPAvailability(args=args),
-        ScalarContext("total"),
-        ScalarContext("used", args.warn, args.critical),
-        osnag.Summary(show=["total", "used"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="0:200",
+            help="return warning if number of used ip's is outside range (default: 0:200, warn if more than 200 are used)",
+        )
+        options.add_argument(
+            "-c",
+            "--critical",
+            metavar="RANGE",
+            default="0:230",
+            help="return critical if number of used ip's is outside RANGE (default 0:230, critical if more than 230 are used)",
+        )
+        options.add_argument(
+            "-n",
+            "--network_uuid",
+            required=True,
+            help="network_uuid to check",
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(NeutronNetworkIPAvailability)

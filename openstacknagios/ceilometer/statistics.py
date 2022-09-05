@@ -28,12 +28,13 @@ the value).
 """
 
 import datetime
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
 
 import ceilometerclient.v2.client as ceilclient
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
+from openstack.config.cloud_region import CloudRegion
 from pytz import timezone
 
 import openstacknagios.openstacknagios as osnag
@@ -44,13 +45,23 @@ DATE_FORMAT_TZ = "%Y-%m-%dT%H:%M:%S %Z"
 
 
 class CeilometerStatistics(osnag.Resource):
-    def __init__(self, args=None):
-        super().__init__()
+    def __init__(self, check: Check, args: Namespace, region: CloudRegion) -> None:
+        super().__init__(check, args, region)
         self.meter = args.meter
         self.tframe = datetime.timedelta(minutes=int(args.tframe))
         self.tzone = timezone(args.tzone)
         self.verbose = args.verbose
         self.aggregate = args.aggregate
+
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
+
+        check.add(
+            ScalarContext("age", args.warn_age, args.critical_age),
+            ScalarContext("count", args.warn_count, args.critical_count),
+            ScalarContext("value", args.warn, args.critical),
+            osnag.Summary(show=["age", "count", "value"]),
+        )
 
     def probe(self):
         ceilometer = ceilclient.Client(session=self.session)
@@ -94,91 +105,75 @@ class CeilometerStatistics(osnag.Resource):
                 uom=getattr(t, "unit", ""),
             )
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "-m",
-        "--meter",
-        metavar="METER_NAME",
-        required=True,
-        help="meter name (required)",
-    )
-    argp.add_argument(
-        "-t",
-        "--tframe",
-        metavar="VALUE",
-        type=int,
-        default=60,
-        help="Time frame to look back in minutes",
-    )
-    argp.add_argument(
-        "--tzone",
-        metavar="TZONE",
-        default="utc",
-        help="Timezone to use. Ceilometer does not store any timezone information with the samples.",
-    )
-
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if value is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if value is outside RANGE (default 0:, never critical)",
-    )
-
-    argp.add_argument(
-        "--warn_count",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if the number of samples is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "--critical_count",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if the number of samples is outside RANGE (default: 0:, never critical)",
-    )
-
-    argp.add_argument(
-        "--warn_age",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if the age in minutes of the last value is outside RANGE (default: 0:30, warn if older than 30 minutes)",
-    )
-    argp.add_argument(
-        "--critical_age",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if the age in minutes of the last value is outside RANGE (default: 0:60, critical if older than 1 hour)",
-    )
-
-    argp.add_argument(
-        "--aggregate",
-        default="avg",
-        help="Aggregate function to use. Can be one of avg or sum (avg is the default)",
-    )
-
-    args = argp.parse_args()
-
-    check = Check(
-        CeilometerStatistics(args=args),
-        ScalarContext("age", args.warn_age, args.critical_age),
-        ScalarContext("count", args.warn_count, args.critical_count),
-        ScalarContext("value", args.warn, args.critical),
-        osnag.Summary(show=["age", "count", "value"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "-m",
+            "--meter",
+            metavar="METER_NAME",
+            required=True,
+            help="meter name (required)",
+        )
+        options.add_argument(
+            "-t",
+            "--tframe",
+            metavar="VALUE",
+            type=int,
+            default=60,
+            help="Time frame to look back in minutes",
+        )
+        options.add_argument(
+            "--tzone",
+            metavar="TZONE",
+            default="utc",
+            help="Timezone to use. Ceilometer does not store any timezone information with the samples.",
+        )
+        options.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if value is outside RANGE (default: 0:, never warn)",
+        )
+        options.add_argument(
+            "-c",
+            "--critical",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if value is outside RANGE (default 0:, never critical)",
+        )
+        options.add_argument(
+            "--warn_count",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if the number of samples is outside RANGE (default: 0:, never warn)",
+        )
+        options.add_argument(
+            "--critical_count",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if the number of samples is outside RANGE (default: 0:, never critical)",
+        )
+        options.add_argument(
+            "--warn_age",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if the age in minutes of the last value is outside RANGE (default: 0:30, warn if older than 30 minutes)",
+        )
+        options.add_argument(
+            "--critical_age",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if the age in minutes of the last value is outside RANGE (default: 0:60, critical if older than 1 hour)",
+        )
+        options.add_argument(
+            "--aggregate",
+            default="avg",
+            help="Aggregate function to use. Can be one of avg or sum (avg is the default)",
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(CeilometerStatistics)

@@ -25,13 +25,13 @@ The check will get a token and mesure the time used.
 """
 
 import time
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
 
 import keystoneclient.v2_0.client as ksclient2
 import keystoneclient.v3.client as ksclient3
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 
 import openstacknagios.openstacknagios as osnag
 
@@ -41,58 +41,52 @@ class KeystoneToken(osnag.Resource):
     Nagios/Icinga plugin to check keystone.
     """
 
-    def __init__(self, args=None):
-        super().__init__()
-        self.token_version = args.tversion
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
+
+        check.add(
+            ScalarContext("gettime", args.warn, args.critical),
+            osnag.Summary(show=["gettime"]),
+        )
 
     def probe(self):
         start = time.time()
-        if self.token_version == "2":
+        if self.args.token_version == "2":
             ksclient2.Client(session=self.session)
-        elif self.token_version == "3":
+        elif self.args.token_version == "3":
             ksclient3.Client(session=self.session)
         else:
-            raise ValueError(f"Unknown token-version: {self.token_version}")
+            raise ValueError(f"Unknown token-version: {self.args.token_version}")
 
         get_time = time.time()
 
         return Metric("gettime", get_time - start, min=0)
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "--tversion",
-        metavar="TOKENVERSION",
-        default="3",
-        help="the version of the keystoneclient to use to verify the token. currently supported is 3 and 2 (default 3)",
-    )
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if number of up agents is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if number of up agents is outside RANGE (default 1:, never critical)",
-    )
-
-    args = argp.parse_args()
-
-    check = Check(
-        KeystoneToken(args=args),
-        ScalarContext("gettime", args.warn, args.critical),
-        osnag.Summary(show=["gettime"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "--tversion",
+            metavar="TOKENVERSION",
+            default="3",
+            help="the version of the keystoneclient to use to verify the token. currently supported is 3 and 2 (default 3)",
+        )
+        options.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if number of up agents is outside RANGE (default: 0:, never warn)",
+        )
+        options.add_argument(
+            "-c",
+            "--critical",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if number of up agents is outside RANGE (default 1:, never critical)",
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(KeystoneToken)

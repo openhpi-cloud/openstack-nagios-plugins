@@ -24,10 +24,11 @@ Nagios/Icinga plugin to check running nova services
 This corresponds to the output of 'nova service-list'.
 """
 
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 from novaclient.client import Client
 
 import openstacknagios.openstacknagios as osnag
@@ -38,15 +39,20 @@ class NovaServices(osnag.Resource):
     Determines the status of the nova services.
     """
 
-    def __init__(self, binary=None, host=None):
-        super().__init__()
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
 
-        self.binary = binary
-        self.host = host
+        check.add(
+            ScalarContext("up", args.warn, args.critical),
+            ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
+            ScalarContext("down", args.warn_down, args.critical_down),
+            ScalarContext("total", "0:", "@0"),
+            osnag.Summary(show=["up", "disabled", "down", "total"]),
+        )
 
     def probe(self):
         nova = Client("2.1", session=self.session)
-        result = nova.services.list(host=self.host, binary=self.binary)
+        result = nova.services.list(host=self.args.host, binary=self.args.binary)
 
         services_up = 0
         services_disabled = 0
@@ -69,68 +75,59 @@ class NovaServices(osnag.Resource):
             Metric("total", services_total, min=0),
         ]
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if number of up agents is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if number of up agents is outside RANGE (default 1:, never critical)",
-    )
-
-    argp.add_argument(
-        "--warn_disabled",
-        metavar="RANGE",
-        default="@1:",
-        help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents)",
-    )
-    argp.add_argument(
-        "--critical_disabled",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical)",
-    )
-    argp.add_argument(
-        "--warn_down",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if number of down agents is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "--critical_down",
-        metavar="RANGE",
-        default="0",
-        help="return critical if number of down agents is outside RANGE (default: 0, always critical if any)",
-    )
-
-    argp.add_argument(
-        "--binary", dest="binary", default=None, help="filter agent binary"
-    )
-    argp.add_argument("--host", dest="host", default=None, help="filter hostname")
-
-    args = argp.parse_args()
-
-    check = Check(
-        NovaServices(host=args.host, binary=args.binary),
-        ScalarContext("up", args.warn, args.critical),
-        ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
-        ScalarContext("down", args.warn_down, args.critical_down),
-        ScalarContext("total", "0:", "@0"),
-        osnag.Summary(show=["up", "disabled", "down", "total"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "--warn",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if number of up agents is outside RANGE (default: 0:, never warn)",
+        )
+        options.add_argument(
+            "--critical",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if number of up agents is outside RANGE (default 1:, never critical)",
+        )
+        options.add_argument(
+            "--warn-disabled",
+            metavar="RANGE",
+            default="@1:",
+            help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents)",
+        )
+        options.add_argument(
+            "--critical-disabled",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical)",
+        )
+        options.add_argument(
+            "--warn-down",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if number of down agents is outside RANGE (default: 0:, never warn)",
+        )
+        options.add_argument(
+            "--critical-down",
+            metavar="RANGE",
+            default="0",
+            help="return critical if number of down agents is outside RANGE (default: 0, always critical if any)",
+        )
+        options.add_argument(
+            "--binary",
+            dest="binary",
+            default=None,
+            help="filter agent binary",
+        )
+        options.add_argument(
+            "--host",
+            dest="host",
+            default=None,
+            help="filter hostname",
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(NovaServices)

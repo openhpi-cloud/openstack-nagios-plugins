@@ -24,6 +24,8 @@ Nagios/Icinga plugin to check gnocchi status
 This corresponds to the output of 'gnocchi status'.
 """
 
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
@@ -38,6 +40,15 @@ class GnocchiStatus(Gnocchi):
     Determines the status of gnocchi.
     """
 
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
+
+        check.add(
+            ScalarContext("measures", args.warn, args.critical),
+            ScalarContext("metrics", args.warn_metrics, args.critical_metrics),
+            osnag.Summary(show=["measures", "metrics"]),
+        )
+
     def probe(self):
         client = self.get_client()
         result = client.status.get()["storage"]["summary"]
@@ -49,49 +60,37 @@ class GnocchiStatus(Gnocchi):
             Metric("metrics", result["metrics"]),
         ]
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:100",
-        help="return warning if number of measures to process is out of range (default: 0:100)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="range",
-        default="0:200",
-        help="return critical if number of measures to process is out of range (default 0:200)",
-    )
-
-    argp.add_argument(
-        "--warn_metrics",
-        metavar="RANGE",
-        default="0:100",
-        help="return warning if number of metrics having measures to process outside RANGE (default: 0:100)",
-    )
-    argp.add_argument(
-        "--critical_metrics",
-        metavar="RANGE",
-        default="0:200",
-        help="return critical if number of metrics having measures to process is outside RANGE (default: 0:200)",
-    )
-
-    args = argp.parse_args()
-
-    check = Check(
-        GnocchiStatus(args=args),
-        ScalarContext("measures", args.warn, args.critical),
-        ScalarContext("metrics", args.warn_metrics, args.critical_metrics),
-        osnag.Summary(show=["measures", "metrics"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="0:100",
+            help="return warning if number of measures to process is out of range (default: 0:100)",
+        )
+        options.add_argument(
+            "-c",
+            "--critical",
+            metavar="range",
+            default="0:200",
+            help="return critical if number of measures to process is out of range (default 0:200)",
+        )
+        options.add_argument(
+            "--warn_metrics",
+            metavar="RANGE",
+            default="0:100",
+            help="return warning if number of metrics having measures to process outside RANGE (default: 0:100)",
+        )
+        options.add_argument(
+            "--critical_metrics",
+            metavar="RANGE",
+            default="0:200",
+            help="return critical if number of metrics having measures to process is outside RANGE (default: 0:200)",
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(GnocchiStatus)

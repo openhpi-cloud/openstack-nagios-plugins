@@ -27,10 +27,11 @@ neutron servers without astara extensions.
 This corresponds to the output of 'neutron router-list -c id -c status'.
 """
 
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -38,8 +39,18 @@ import openstacknagios.openstacknagios as osnag
 
 class NeutronRouters(osnag.Resource):
     """
-    Determines the number down/build/active routers
+    Nagios plugin to check router status:
+
+    Checks and reports the number of down/build/active routers.
     """
+
+    def configure(self, check: Check, args: Namespace):
+        check.add(
+            ScalarContext("active"),
+            ScalarContext("down", args.warn, args.critical),
+            ScalarContext("build", args.warn_build, args.critical_build),
+            osnag.Summary(show=["active", "down", "build"]),
+        )
 
     def probe(self):
         neutron = client.Client("2.0", session=self.session)
@@ -63,53 +74,38 @@ class NeutronRouters(osnag.Resource):
             Metric("build", build, min=0),
         ]
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        options.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="0:",
+            help='Warning range for DOWN routers (default: "0:")',
+        )
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
+        options.add_argument(
+            "-c",
+            "--critical",
+            metavar="RANGE",
+            default=":10",
+            help='Critical range for DOWN routers (default: ":10")',
+        )
 
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:",
-        help="""return warning if number of down routers is
-                      greater than (default: 0)""",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default=":10",
-        help="""return critical if number of down routers is
-                      greater than (default: 10) """,
-    )
-    argp.add_argument(
-        "--warn_build",
-        metavar="RANGE",
-        default="0:",
-        help="""return warning if number of building routers is
-                      greater than (default: 0)""",
-    )
-    argp.add_argument(
-        "--critical_build",
-        metavar="RANGE",
-        default=":10",
-        help="""return critical if number of building routers
-                      is greater than (default: 10) """,
-    )
+        options.add_argument(
+            "--warn-build",
+            metavar="RANGE",
+            default="0:",
+            help='Warning range for BUILD routers (default: "0:")',
+        )
 
-    args = argp.parse_args()
-
-    check = Check(
-        NeutronRouters(),
-        ScalarContext("active"),
-        ScalarContext("down", args.warn, args.critical),
-        ScalarContext("build", args.warn_build, args.critical_build),
-        osnag.Summary(show=["active", "down", "build"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "--critical-build",
+            metavar="RANGE",
+            default=":10",
+            help='Critical range for BUILD routers (default: ":10")',
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(NeutronRouters)

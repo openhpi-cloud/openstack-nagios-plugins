@@ -18,24 +18,80 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from argparse import ArgumentParser as ArgArgumentParser
+import sys
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+from typing import Type
 
+import nagiosplugin
 import openstack
+import openstack.config.loader
 import openstack.connection
+from keystoneauth1.session import Session
+from nagiosplugin import Check
 from nagiosplugin import Resource as NagiosResource
 from nagiosplugin import Summary as NagiosSummary
+from openstack.config.cloud_region import CloudRegion
 
 
 class Resource(NagiosResource):
     """
-    Openstack specific
+    OpenStack Check Resource
     """
 
+    def __init__(self, check: Check, args: Namespace, region: CloudRegion) -> None:
+        super().__init__()
+
+        self.args = args
+        self.region = region
+        self.configure(check, args)
+
     @property
-    def session(self):
-        connection = openstack.connect()
+    def session(self) -> Session:
+        connection = openstack.connection.Connection(config=self.region)
         connection.authorize()
         return connection.session
+
+    def configure(self, check: Check, args: Namespace):
+        """
+        Subclasses shall override this method to extend the nagios check
+        object, e.g. to add additional scalars or summary objects.
+
+        Example:
+
+            def prepare(self, check: Check, args: Namespace):
+                check.add(
+                    ScalarContext("active"),
+                    ScalarContext("down", args.warn, args.critical),
+                    ScalarContext("build", args.warn_build, args.critical_build),
+                    osnag.Summary(show=["active", "down", "build"]),
+                )
+        """
+
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        """
+        Subclasses can override this method to extend the argument
+        parser before arguments are parsed.
+
+        Example:
+
+            @classmethod
+            def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+                options.add_argument(
+                    "-w",
+                    "--warn",
+                    metavar="RANGE",
+                    default="0:",
+                    help='Warning range for DOWN routers (default: "0:")',
+                )
+                options.add_argument(
+                    "-c",
+                    "--critical",
+                    metavar="RANGE",
+                    default=":10",
+                    help='Critical range for DOWN routers (default: ":10")',
+                )
+        """
 
 
 class Summary(NagiosSummary):
@@ -57,21 +113,53 @@ class Summary(NagiosSummary):
         )
 
 
-class ArgumentParser(ArgArgumentParser):
-    def __init__(self, description, epilog=""):
-        ArgArgumentParser.__init__(self, description=description, epilog=epilog)
+@nagiosplugin.guarded
+def run_check(resource_class: Type[Resource]):
+    parser = ArgumentParser(description=resource_class.__doc__)
 
-        self.add_argument(
-            "-v",
-            "--verbose",
-            action="count",
-            default=0,
-            help="increase output verbosity (use up to 3 times)"
-            "(not everywhere implemented)",
-        )
-        self.add_argument(
-            "--timeout",
-            type=int,
-            default=10,
-            help="amount of seconds until execution stops with unknown state (default 10 seconds)",
-        )
+    options = parser.add_argument_group("Check Options")
+
+    options.add_argument(
+        "--check-timeout",
+        type=int,
+        default=10,
+        help="Timeout for total check execution in seconds (default: 10)",
+    )
+
+    options.add_argument(
+        "--verbose",
+        action="count",
+        default=0,
+        help="Increase output verbosity",
+    )
+
+    # Allow resources to add custom options to the argument parser.
+    resource_class.setup(options, parser)
+
+    # Set up OpenStack connection session and load config using
+    # OpenStacks config framework.
+    #
+    # This supports configuration via:
+    #
+    # * Environment variables
+    # * Command line arguments
+    # * Cloud Profile
+    #
+    config = openstack.config.loader.OpenStackConfig(
+        app_name="openstacknagios",
+    )
+
+    # Add OpenStack arguments to our parser
+    config.register_argparse_arguments(parser, sys.argv)
+    args = parser.parse_args()
+
+    # Load region configuration
+    #
+    # This region config is given to the check resource, to create a
+    # connection/session when needed.
+    region = config.get_one(argparse=args)
+
+    check = Check()
+    resource = resource_class(check, args, region)
+    check.add(resource)
+    check.main(verbose=args.verbose, timeout=args.check_timeout)

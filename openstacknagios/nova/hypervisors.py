@@ -24,30 +24,63 @@ Nagios/Icinga plugin to check nova hypervisors
 This corresponds to the output of 'nova hypervisor-stats'
 """
 
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 from novaclient.client import Client
 
 import openstacknagios.openstacknagios as osnag
 
 
 class NovaHypervisors(osnag.Resource):
-    """
-    Determines the status of the nova hypervisors.
-    """
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
 
-    def __init__(self, host=None):
-        super().__init__()
-        self.host = host
+        check.add(
+            ScalarContext(
+                "running_vms",
+                args.warn,
+                args.critical,
+            ),
+            ScalarContext(
+                "vcpus_used",
+                args.warn_vcpus,
+                args.critical_vcpus,
+            ),
+            ScalarContext(
+                "vcpus_percent",
+                args.warn_vcpus_percent,
+                args.critical_vcpus_percent,
+            ),
+            ScalarContext(
+                "memory_used",
+                args.warn_memory,
+                args.critical_memory,
+            ),
+            ScalarContext(
+                "memory_percent",
+                args.warn_memory_percent,
+                args.critical_memory_percent,
+            ),
+            osnag.Summary(
+                show=[
+                    "memory_used",
+                    "memory_percent",
+                    "vcpus_used",
+                    "vcpus_percent",
+                    "running_vms",
+                ]
+            ),
+        )
 
     def probe(self):
         nova = Client("2.1", session=self.session)
 
-        if self.host:
+        if self.args.host:
             result = nova.hypervisors.get(
-                nova.hypervisors.find(hypervisor_hostname=self.host)
+                nova.hypervisors.find(hypervisor_hostname=self.args.host)
             )
         else:
             result = nova.hypervisors.statistics()
@@ -84,111 +117,79 @@ class NovaHypervisors(osnag.Resource):
             ),
         ]
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "-H",
-        "--host",
-        default=None,
-        help="hostname where the hypervisor is running if not defined (default), summary of all hosts is used",
-    )
-
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if number of running vms is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if number of running vms is outside RANGE (default 0:, never critical)",
-    )
-
-    argp.add_argument(
-        "--warn_memory",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if used memory is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "--critical_memory",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if used memory is outside RANGE (default: 0:, never critical)",
-    )
-
-    argp.add_argument(
-        "--warn_memory_percent",
-        metavar="RANGE",
-        default="0:90",
-        help="return warning if used memory is outside percent RANGE (default: 0:90, warn if 90%% of memory is used)",
-    )
-
-    argp.add_argument(
-        "--critical_memory_percent",
-        metavar="RANGE",
-        default="0:95",
-        help="return critical if used memory is outside percent RANGE (default: 0:90, critical if 95%% of memory is used)",
-    )
-
-    argp.add_argument(
-        "--warn_vcpus",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if used vcpus is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "--critical_vcpus",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if used vcpus is outside RANGE (default: 0, always critical if any)",
-    )
-
-    argp.add_argument(
-        "--warn_vcpus_percent",
-        metavar="RANGE",
-        default="0:90",
-        help="return warning if used vcpus is outside percent RANGE (default: 0:90, warn if 90%% of vcpus are used)",
-    )
-    argp.add_argument(
-        "--critical_vcpus_percent",
-        metavar="RANGE",
-        default="0:95",
-        help="return critical if used vcpus is outside percent RANGE (default: 0:95, critical if 95%% of vcpus are used)",
-    )
-
-    args = argp.parse_args()
-
-    check = Check(
-        NovaHypervisors(host=args.host),
-        ScalarContext("running_vms", args.warn, args.critical),
-        ScalarContext("vcpus_used", args.warn_vcpus, args.critical_vcpus),
-        ScalarContext(
-            "vcpus_percent", args.warn_vcpus_percent, args.critical_vcpus_percent
-        ),
-        ScalarContext("memory_used", args.warn_memory, args.critical_memory),
-        ScalarContext(
-            "memory_percent", args.warn_memory_percent, args.critical_memory_percent
-        ),
-        osnag.Summary(
-            show=[
-                "memory_used",
-                "memory_percent",
-                "vcpus_used",
-                "vcpus_percent",
-                "running_vms",
-            ]
-        ),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        parser.add_argument(
+            "-H",
+            "--host",
+            default=None,
+            help="hostname where the hypervisor is running if not defined (default), summary of all hosts is used",
+        )
+        parser.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if number of running vms is outside RANGE (default: 0:, never warn)",
+        )
+        parser.add_argument(
+            "-c",
+            "--critical",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if number of running vms is outside RANGE (default 0:, never critical)",
+        )
+        parser.add_argument(
+            "--warn_memory",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if used memory is outside RANGE (default: 0:, never warn",
+        )
+        parser.add_argument(
+            "--critical_memory",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if used memory is outside RANGE (default: 0:, never critical",
+        )
+        parser.add_argument(
+            "--warn_memory_percent",
+            metavar="RANGE",
+            default="0:90",
+            help="return warning if used memory is outside percent RANGE (default: 0:90, warn if 90%% of memory is used",
+        )
+        parser.add_argument(
+            "--critical_memory_percent",
+            metavar="RANGE",
+            default="0:95",
+            help="return critical if used memory is outside percent RANGE (default: 0:90, critical if 95%% of memory is used",
+        )
+        parser.add_argument(
+            "--warn_vcpus",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if used vcpus is outside RANGE (default: 0:, never warn)",
+        )
+        parser.add_argument(
+            "--critical_vcpus",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if used vcpus is outside RANGE (default: 0, always critical if any",
+        )
+        parser.add_argument(
+            "--warn_vcpus_percent",
+            metavar="RANGE",
+            default="0:90",
+            help="return warning if used vcpus is outside percent RANGE (default: 0:90, warn if 90%% of vcpus are used)",
+        )
+        parser.add_argument(
+            "--critical_vcpus_percent",
+            metavar="RANGE",
+            default="0:95",
+            help="return critical if used vcpus is outside percent RANGE (default: 0:95, critical if 95%% of vcpus are used",
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(NovaHypervisors)

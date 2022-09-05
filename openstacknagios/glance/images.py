@@ -24,12 +24,12 @@ This corresponds to the output of 'glance image-list'.
 """
 
 import time
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
 
 from glanceclient.v2.client import Client
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 
 import openstacknagios.openstacknagios as osnag
 
@@ -38,6 +38,14 @@ class GlanceImages(osnag.Resource):
     """
     Lists glance images and gets timing
     """
+
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
+
+        check.add(
+            ScalarContext("gettime", args.warn, args.critical),
+            osnag.Summary(show=["gettime"]),
+        )
 
     def probe(self):
         start = time.time()
@@ -49,35 +57,25 @@ class GlanceImages(osnag.Resource):
 
         return Metric("gettime", get_time - start, min=0)
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if repsonse time is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if repsonse time is outside RANGE (default 1:, never critical)",
-    )
-
-    args = argp.parse_args()
-
-    check = Check(
-        GlanceImages(args=args),
-        ScalarContext("gettime", args.warn, args.critical),
-        osnag.Summary(show=["gettime"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if repsonse time is outside RANGE (default: 0:, never warn)",
+        )
+        options.add_argument(
+            "-c",
+            "--critical",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if repsonse time is outside RANGE (default 1:, never critical)",
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(GlanceImages)

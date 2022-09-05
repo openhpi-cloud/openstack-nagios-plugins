@@ -26,10 +26,11 @@ metric. Use a canary project to get measures (query for all available
 projects take to long !)
 """
 
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 
 import openstacknagios.gnocchi.gnocchi as gnocchi
 import openstacknagios.openstacknagios as osnag
@@ -39,6 +40,14 @@ class GnocchiMeasures(gnocchi.Gnocchi):
     """
     Determines the amount of measures.
     """
+
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
+
+        check.add(
+            ScalarContext("measures", args.warn, args.critical),
+            osnag.Summary(show=["measures"]),
+        )
 
     def probe(self):
         client = self.get_client()
@@ -56,59 +65,46 @@ class GnocchiMeasures(gnocchi.Gnocchi):
 
         return Metric("measures", count)
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="2:",
-        help="return warning if number of measures is out of  range (default: 2:)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default="1:",
-        help="return critical if number of measures is out of range (default 1:)",
-    )
-
-    argp.add_argument(
-        "--start",
-        metavar="TIMESTAMP",
-        default="-1h",
-        help="start timestamp to query, default -1h",
-    )
-    argp.add_argument(
-        "--stop",
-        metavar="TIMESTAMP",
-        default="+0h",
-        help="start timestamp to query, default +0h (now)",
-    )
-
-    argp.add_argument(
-        "--project_id",
-        metavar="PROJECT_ID",
-        required=True,
-        help="project id to query (mandatory, since otherwise query takes too long!)",
-    )
-
-    argp.add_argument(
-        "--metric", metavar="METRIC", required=True, help="metric to query"
-    )
-
-    args = argp.parse_args()
-
-    check = Check(
-        GnocchiMeasures(args=args),
-        ScalarContext("measures", args.warn, args.critical),
-        osnag.Summary(show=["measures"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="2:",
+            help="return warning if number of measures is out of  range (default: 2:)",
+        )
+        options.add_argument(
+            "-c",
+            "--critical",
+            metavar="RANGE",
+            default="1:",
+            help="return critical if number of measures is out of range (default 1:)",
+        )
+        options.add_argument(
+            "--start",
+            metavar="TIMESTAMP",
+            default="-1h",
+            help="start timestamp to query, default -1h",
+        )
+        options.add_argument(
+            "--stop",
+            metavar="TIMESTAMP",
+            default="+0h",
+            help="start timestamp to query, default +0h (now)",
+        )
+        options.add_argument(
+            "--project_id",
+            metavar="PROJECT_ID",
+            required=True,
+            help="project id to query (mandatory, since otherwise query takes too long!)",
+        )
+        options.add_argument(
+            "--metric", metavar="METRIC", required=True, help="metric to query"
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(GnocchiMeasures)

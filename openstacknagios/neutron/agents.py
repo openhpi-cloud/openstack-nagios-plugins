@@ -24,11 +24,13 @@ Nagios/Icinga plugin to check running neutron agents
 This corresponds to the output of 'neutron agent-list'.
 """
 
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 from neutronclient.neutron import client
+from openstack.config.cloud_region import CloudRegion
 
 import openstacknagios.openstacknagios as osnag
 
@@ -38,11 +40,21 @@ class NeutronAgents(osnag.Resource):
     Determines the status of the neutron agents.
     """
 
-    def __init__(self, binary=None, host=None):
-        super().__init__()
+    def __init__(self, check: Check, args: Namespace, region: CloudRegion) -> None:
+        super().__init__(check, args, region)
+        self.binary = args.binary
+        self.host = args.host
 
-        self.binary = binary
-        self.host = host
+    def configure(self, check: Check, args: Namespace):
+        super().configure(check, args)
+
+        check.add(
+            ScalarContext("up", args.warn, args.critical),
+            ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
+            ScalarContext("down", args.warn_down, args.critical_down),
+            ScalarContext("total", "0:", "@0"),
+            osnag.Summary(show=["up", "disabled", "down"]),
+        )
 
     def probe(self):
         neutron = client.Client("2.0", session=self.session)
@@ -77,66 +89,61 @@ class NeutronAgents(osnag.Resource):
             Metric("total", agents_total, min=0),
         ]
 
+    @classmethod
+    def setup(cls, options: _ArgumentGroup, parser: ArgumentParser):
+        super().setup(options, parser)
 
-@guarded
-def main():
-    argp = osnag.ArgumentParser(description=__doc__)
-
-    argp.add_argument(
-        "-w",
-        "--warn",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if number of up agents is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "-c",
-        "--critical",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if number of up agents is outside RANGE (default 1:, never critical)",
-    )
-
-    argp.add_argument(
-        "--warn_disabled",
-        metavar="RANGE",
-        default="@1:",
-        help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents)",
-    )
-    argp.add_argument(
-        "--critical_disabled",
-        metavar="RANGE",
-        default="0:",
-        help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical)",
-    )
-    argp.add_argument(
-        "--warn_down",
-        metavar="RANGE",
-        default="0:",
-        help="return warning if number of down agents is outside RANGE (default: 0:, never warn)",
-    )
-    argp.add_argument(
-        "--critical_down",
-        metavar="RANGE",
-        default="0",
-        help="return critical if number of down agents is outside RANGE (default: 0, always critical if any)",
-    )
-
-    argp.add_argument("--binary", dest="binary", default="", help="filter agent binary")
-    argp.add_argument("--host", dest="host", default="", help="filter hostname")
-
-    args = argp.parse_args()
-
-    check = Check(
-        NeutronAgents(host=args.host, binary=args.binary),
-        ScalarContext("up", args.warn, args.critical),
-        ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
-        ScalarContext("down", args.warn_down, args.critical_down),
-        ScalarContext("total", "0:", "@0"),
-        osnag.Summary(show=["up", "disabled", "down"]),
-    )
-    check.main(verbose=args.verbose, timeout=args.timeout)
+        options.add_argument(
+            "-w",
+            "--warn",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if number of up agents is outside RANGE (default: 0:, never warn)",
+        )
+        options.add_argument(
+            "-c",
+            "--critical",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if number of up agents is outside RANGE (default 1:, never critical)",
+        )
+        options.add_argument(
+            "--warn_disabled",
+            metavar="RANGE",
+            default="@1:",
+            help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents)",
+        )
+        options.add_argument(
+            "--critical_disabled",
+            metavar="RANGE",
+            default="0:",
+            help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical)",
+        )
+        options.add_argument(
+            "--warn_down",
+            metavar="RANGE",
+            default="0:",
+            help="return warning if number of down agents is outside RANGE (default: 0:, never warn)",
+        )
+        options.add_argument(
+            "--critical_down",
+            metavar="RANGE",
+            default="0",
+            help="return critical if number of down agents is outside RANGE (default: 0, always critical if any)",
+        )
+        options.add_argument(
+            "--binary",
+            dest="binary",
+            default="",
+            help="filter agent binary",
+        )
+        options.add_argument(
+            "--host",
+            dest="host",
+            default="",
+            help="filter hostname",
+        )
 
 
 if __name__ == "__main__":
-    main()
+    osnag.run_check(NeutronAgents)
