@@ -27,7 +27,10 @@ neutron servers without astara extensions.
 This corresponds to the output of 'neutron router-list -c id -c status'.
 """
 
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -61,7 +64,7 @@ class NeutronRouters(osnag.Resource):
         ]
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -98,11 +101,11 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         NeutronRouters(),
-        osnag.ScalarContext("active"),
-        osnag.ScalarContext("down", args.warn, args.critical),
-        osnag.ScalarContext("build", args.warn_build, args.critical_build),
+        ScalarContext("active"),
+        ScalarContext("down", args.warn, args.critical),
+        ScalarContext("build", args.warn_build, args.critical_build),
         osnag.Summary(show=["active", "down", "build"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

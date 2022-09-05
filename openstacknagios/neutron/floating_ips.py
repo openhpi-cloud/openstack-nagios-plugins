@@ -24,7 +24,10 @@ Counts the assigned IPs (= used + unused). This corresponds to the
 output of 'neutron floatingip-list'.
 """
 
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -53,7 +56,7 @@ class NeutronFloatingIPs(osnag.Resource):
         ]
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -74,10 +77,10 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         NeutronFloatingIPs(),
-        osnag.ScalarContext("assigned", args.warn, args.critical),
-        osnag.ScalarContext("used"),
+        ScalarContext("assigned", args.warn, args.critical),
+        ScalarContext("used"),
         osnag.Summary(show=["assigned", "used"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

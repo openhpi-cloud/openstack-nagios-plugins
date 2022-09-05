@@ -26,7 +26,10 @@ This corresponds to the output of 'glance image-list'.
 import time
 
 from glanceclient.v2.client import Client
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
 
 import openstacknagios.openstacknagios as osnag
 
@@ -47,7 +50,7 @@ class GlanceImages(osnag.Resource):
         return Metric("gettime", get_time - start, min=0)
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -68,9 +71,9 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         GlanceImages(args=args),
-        osnag.ScalarContext("gettime", args.warn, args.critical),
+        ScalarContext("gettime", args.warn, args.critical),
         osnag.Summary(show=["gettime"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

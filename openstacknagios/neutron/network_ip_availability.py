@@ -20,7 +20,10 @@ Nagios/Icinga plugin to check available IPs
 This corresponds to the output of 'openstack ip availabilities show'.
 """
 
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -46,8 +49,7 @@ class NeutronNetworkIPAvailability(osnag.Resource):
         ]
 
 
-
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -70,10 +72,10 @@ def main():
     )
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         NeutronNetworkIPAvailability(args=args),
-        osnag.ScalarContext("total"),
-        osnag.ScalarContext("used", args.warn, args.critical),
+        ScalarContext("total"),
+        ScalarContext("used", args.warn, args.critical),
         osnag.Summary(show=["total", "used"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

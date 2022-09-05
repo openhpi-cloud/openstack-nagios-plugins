@@ -26,7 +26,11 @@ metric. Use a canary project to get measures (query for all available
 projects take to long !)
 """
 
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
+
 import openstacknagios.gnocchi.gnocchi as gnocchi
 import openstacknagios.openstacknagios as osnag
 
@@ -53,7 +57,7 @@ class GnocchiMeasures(gnocchi.Gnocchi):
         return Metric("measures", count)
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -98,9 +102,9 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         GnocchiMeasures(args=args),
-        osnag.ScalarContext("measures", args.warn, args.critical),
+        ScalarContext("measures", args.warn, args.critical),
         osnag.Summary(show=["measures"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

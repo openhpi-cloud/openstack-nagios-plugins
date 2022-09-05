@@ -24,7 +24,11 @@ Nagios/Icinga plugin to check gnocchi status
 This corresponds to the output of 'gnocchi status'.
 """
 
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
+
 import openstacknagios.openstacknagios as osnag
 from openstacknagios.gnocchi.gnocchi import Gnocchi
 
@@ -46,7 +50,7 @@ class GnocchiStatus(Gnocchi):
         ]
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -80,10 +84,10 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         GnocchiStatus(args=args),
-        osnag.ScalarContext("measures", args.warn, args.critical),
-        osnag.ScalarContext("metrics", args.warn_metrics, args.critical_metrics),
+        ScalarContext("measures", args.warn, args.critical),
+        ScalarContext("metrics", args.warn_metrics, args.critical_metrics),
         osnag.Summary(show=["measures", "metrics"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

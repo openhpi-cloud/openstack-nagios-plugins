@@ -24,7 +24,10 @@ Nagios/Icinga plugin to check running nova services
 This corresponds to the output of 'nova service-list'.
 """
 
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
 from novaclient.client import Client
 
 import openstacknagios.openstacknagios as osnag
@@ -67,7 +70,7 @@ class NovaServices(osnag.Resource):
         ]
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -118,12 +121,12 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         NovaServices(host=args.host, binary=args.binary),
-        osnag.ScalarContext("up", args.warn, args.critical),
-        osnag.ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
-        osnag.ScalarContext("down", args.warn_down, args.critical_down),
-        osnag.ScalarContext("total", "0:", "@0"),
+        ScalarContext("up", args.warn, args.critical),
+        ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
+        ScalarContext("down", args.warn_down, args.critical_down),
+        ScalarContext("total", "0:", "@0"),
         osnag.Summary(show=["up", "disabled", "down", "total"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

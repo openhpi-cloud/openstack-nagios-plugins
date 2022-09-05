@@ -25,7 +25,10 @@ This corresponds to the output of 'cinder service-list'.
 """
 
 from cinderclient.client import Client
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
 
 import openstacknagios.openstacknagios as osnag
 
@@ -69,7 +72,7 @@ class CinderServices(osnag.Resource):
         ]
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -120,12 +123,12 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         CinderServices(host=args.host, binary=args.binary),
-        osnag.ScalarContext("up", args.warn, args.critical),
-        osnag.ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
-        osnag.ScalarContext("down", args.warn_down, args.critical_down),
-        osnag.ScalarContext("total", "0:", "@0"),
+        ScalarContext("up", args.warn, args.critical),
+        ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
+        ScalarContext("down", args.warn_down, args.critical_down),
+        ScalarContext("total", "0:", "@0"),
         osnag.Summary(show=["up", "disabled", "down", "total"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

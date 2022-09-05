@@ -18,16 +18,12 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 from argparse import ArgumentParser as ArgArgumentParser
 
 import openstack
 import openstack.connection
-from nagiosplugin import Check, Metric
 from nagiosplugin import Resource as NagiosResource
-from nagiosplugin import ScalarContext
 from nagiosplugin import Summary as NagiosSummary
-from nagiosplugin import guarded
 
 
 class Resource(NagiosResource):

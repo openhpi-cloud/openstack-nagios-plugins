@@ -23,7 +23,10 @@ Nagios plugin to check panko events
 
 import time
 
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
 from pankoclient.v2.client import Client
 
 import openstacknagios.openstacknagios as osnag
@@ -45,7 +48,7 @@ class PankoEvents(osnag.Resource):
         return Metric("gettime", get_time - start, min=0)
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -66,9 +69,9 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         PankoEvents(args=args),
-        osnag.ScalarContext("gettime", args.warn, args.critical),
+        ScalarContext("gettime", args.warn, args.critical),
         osnag.Summary(show=["gettime"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

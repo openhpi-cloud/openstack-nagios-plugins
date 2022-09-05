@@ -29,7 +29,11 @@ scenarios.
 import json
 import sys
 
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
+
 import openstacknagios.openstacknagios as osnag
 
 
@@ -76,7 +80,7 @@ class RallyResults(osnag.Resource):
         ]
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -154,13 +158,13 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         RallyResults(args=args),
-        osnag.ScalarContext("errors", args.warn, args.critical),
-        osnag.ScalarContext("total", args.warn_total, args.critical_total),
-        osnag.ScalarContext("slafail", args.warn_slafail, args.critical_slafail),
-        osnag.ScalarContext("fulldur", args.warn_fulldur, args.critical_fulldur),
-        osnag.ScalarContext("loaddur", args.warn_loaddur, args.critical_loaddur),
+        ScalarContext("errors", args.warn, args.critical),
+        ScalarContext("total", args.warn_total, args.critical_total),
+        ScalarContext("slafail", args.warn_slafail, args.critical_slafail),
+        ScalarContext("fulldur", args.warn_fulldur, args.critical_fulldur),
+        ScalarContext("loaddur", args.warn_loaddur, args.critical_loaddur),
         osnag.Summary(show=["errors", "slafail"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)

@@ -24,7 +24,10 @@ Nagios/Icinga plugin to check nova hypervisors
 This corresponds to the output of 'nova hypervisor-stats'
 """
 
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
 from novaclient.client import Client
 
 import openstacknagios.openstacknagios as osnag
@@ -82,7 +85,7 @@ class NovaHypervisors(osnag.Resource):
         ]
 
 
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -163,15 +166,15 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         NovaHypervisors(host=args.host),
-        osnag.ScalarContext("running_vms", args.warn, args.critical),
-        osnag.ScalarContext("vcpus_used", args.warn_vcpus, args.critical_vcpus),
-        osnag.ScalarContext(
+        ScalarContext("running_vms", args.warn, args.critical),
+        ScalarContext("vcpus_used", args.warn_vcpus, args.critical_vcpus),
+        ScalarContext(
             "vcpus_percent", args.warn_vcpus_percent, args.critical_vcpus_percent
         ),
-        osnag.ScalarContext("memory_used", args.warn_memory, args.critical_memory),
-        osnag.ScalarContext(
+        ScalarContext("memory_used", args.warn_memory, args.critical_memory),
+        ScalarContext(
             "memory_percent", args.warn_memory_percent, args.critical_memory_percent
         ),
         osnag.Summary(

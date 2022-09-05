@@ -30,7 +30,10 @@ the value).
 import datetime
 
 import ceilometerclient.v2.client as ceilclient
+from nagiosplugin.check import Check
+from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
+from nagiosplugin.runtime import guarded
 from pytz import timezone
 
 import openstacknagios.openstacknagios as osnag
@@ -91,47 +94,8 @@ class CeilometerStatistics(osnag.Resource):
                 uom=getattr(t, "unit", ""),
             )
 
-            if self.verbose:
-                print()
-                print("now:            {}".format(now.strftime(date_format_tz)))
-                print("query start     {}".format(tstart.strftime(date_format_tz)))
-                print("duration_start: {}".format(getattr(t, "duration_start", "")))
-                print("period_start:   {}".format(getattr(t, "period_start", "")))
-                print("duration_end:   {}".format(getattr(t, "duration_end", "")))
-                print("period_end:     {}".format(period_end.strftime(date_format_tz)))
-                print(
-                    "age             {} minutes".format(str(age.total_seconds() / 60))
-                )
-                print("count:          {} samples".format(getattr(t, "count", "")))
-                print(
-                    "min:            {} ".format(
-                        getattr(t, "min", "") + getattr(t, "unit", "")
-                    )
-                )
-                print(
-                    "max:            {} ".format(
-                        getattr(t, "max", "") + getattr(t, "unit", "")
-                    )
-                )
-                print(
-                    "duration:       {} minutes".format(
-                        (int(getattr(t, "duration", "")) / 60)
-                    )
-                )
-                print(
-                    "avg:            {} ".format(
-                        getattr(t, "avg", "") + getattr(t, "unit", "")
-                    )
-                )
-                print(
-                    "sum:            {} ".format(
-                        getattr(t, "sum", "") + getattr(t, "unit", "")
-                    )
-                )
-                print()
 
-
-@osnag.guarded
+@guarded
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
@@ -206,11 +170,11 @@ def main():
 
     args = argp.parse_args()
 
-    check = osnag.Check(
+    check = Check(
         CeilometerStatistics(args=args),
-        osnag.ScalarContext("age", args.warn_age, args.critical_age),
-        osnag.ScalarContext("count", args.warn_count, args.critical_count),
-        osnag.ScalarContext("value", args.warn, args.critical),
+        ScalarContext("age", args.warn_age, args.critical_age),
+        ScalarContext("count", args.warn_count, args.critical_count),
+        ScalarContext("value", args.warn, args.critical),
         osnag.Summary(show=["age", "count", "value"]),
     )
     check.main(verbose=args.verbose, timeout=args.timeout)
