@@ -1,3 +1,5 @@
+# pylint: disable=missing-docstring
+
 #
 #    Copyright (C) 2016  Jordan Tardif  http://github.com/jordant
 #    Jordan Tardif <jordan@dreamhost.com>
@@ -14,24 +16,25 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#  
+#
 """
-   Nagios plugin to check router status. Router status is an extended feature
-   provided to neutron via astara. https://github.com/openstack/astara . This
-   plugin will **NOT** work for neutron servers without astara extensions.
+Nagios plugin to check router status
 
-   This corresponds to the output of 'neutron router-list -c id -c status'.
+Router status is an extended feature provided to neutron via astara
+(https://github.com/openstack/astara). This plugin will _NOT_ work for
+neutron servers without astara extensions.
+
+This corresponds to the output of 'neutron router-list -c id -c status'.
 """
-
-import openstacknagios.openstacknagios as osnag
 
 from neutronclient.neutron import client
+
+import openstacknagios.openstacknagios as osnag
 
 
 class NeutronRouters(osnag.Resource):
     """
     Determines the number down/build/active routers
-
     """
 
     def __init__(self, args=None):
@@ -40,12 +43,14 @@ class NeutronRouters(osnag.Resource):
 
     def probe(self):
         try:
-            neutron = client.Client('2.0',
-                                    session=self.get_session(),
-                                    ca_cert=self.openstack['cacert'],
-                                    insecure=self.openstack['insecure'])
+            neutron = client.Client(
+                "2.0",
+                session=self.get_session(),
+                ca_cert=self.openstack["cacert"],
+                insecure=self.openstack["insecure"],
+            )
         except Exception as e:
-            self.exit_error('cannot load ' + str(e))
+            self.exit_error("cannot load " + str(e))
 
         try:
             result = neutron.list_routers()
@@ -54,13 +59,13 @@ class NeutronRouters(osnag.Resource):
 
         stati = dict(active=0, down=0, build=0)
 
-        for router in result['routers']:
-            if router['status'] == 'ACTIVE':
-                stati['active'] += 1
-            if router['status'] == 'DOWN':
-                stati['down'] += 1
-            if router['status'] == 'BUILD':
-                stati['build'] += 1
+        for router in result["routers"]:
+            if router["status"] == "ACTIVE":
+                stati["active"] += 1
+            if router["status"] == "DOWN":
+                stati["down"] += 1
+            if router["status"] == "BUILD":
+                stati["build"] += 1
 
         for r in stati.keys():
             yield osnag.Metric(r, stati[r], min=0)
@@ -70,30 +75,48 @@ class NeutronRouters(osnag.Resource):
 def main():
     argp = osnag.ArgumentParser(description=__doc__)
 
-    argp.add_argument('-w', '--warn', metavar='RANGE', default='0:',
-                      help="""return warning if number of down routers is
-                      greater than (default: 0)""")
-    argp.add_argument('-c', '--critical', metavar='RANGE', default=':10',
-                      help="""return critical if number of down routers is
-                      greater than (default: 10) """)
-    argp.add_argument('--warn_build', metavar='RANGE', default='0:',
-                      help="""return warning if number of building routers is
-                      greater than (default: 0)""")
-    argp.add_argument('--critical_build', metavar='RANGE', default=':10',
-                      help="""return critical if number of building routers
-                      is greater than (default: 10) """)
+    argp.add_argument(
+        "-w",
+        "--warn",
+        metavar="RANGE",
+        default="0:",
+        help="""return warning if number of down routers is
+                      greater than (default: 0)""",
+    )
+    argp.add_argument(
+        "-c",
+        "--critical",
+        metavar="RANGE",
+        default=":10",
+        help="""return critical if number of down routers is
+                      greater than (default: 10) """,
+    )
+    argp.add_argument(
+        "--warn_build",
+        metavar="RANGE",
+        default="0:",
+        help="""return warning if number of building routers is
+                      greater than (default: 0)""",
+    )
+    argp.add_argument(
+        "--critical_build",
+        metavar="RANGE",
+        default=":10",
+        help="""return critical if number of building routers
+                      is greater than (default: 10) """,
+    )
 
     args = argp.parse_args()
 
     check = osnag.Check(
         NeutronRouters(args=args),
-        osnag.ScalarContext('active'),
-        osnag.ScalarContext('down', args.warn, args.critical),
-        osnag.ScalarContext('build', args.warn_build, args.critical_build),
-        osnag.Summary(show=['active', 'down', 'build'])
-        )
+        osnag.ScalarContext("active"),
+        osnag.ScalarContext("down", args.warn, args.critical),
+        osnag.ScalarContext("build", args.warn_build, args.critical_build),
+        osnag.Summary(show=["active", "down", "build"]),
+    )
     check.main(verbose=args.verbose, timeout=args.timeout)
 
-if __name__ == '__main__':
-    main()
 
+if __name__ == "__main__":
+    main()

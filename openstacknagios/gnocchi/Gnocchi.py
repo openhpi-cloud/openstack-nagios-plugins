@@ -1,3 +1,5 @@
+# pylint: disable=missing-docstring
+
 #
 #    Copyright (C) 2014  Cirrax GmbH  http://www.cirrax.com
 #    Benedikt Trefzer <benedikt.trefzer@cirrax.com>
@@ -14,17 +16,18 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#  
+#
 
 """
-    Nagios/Icinga plugin to check gnocchi status.
+Nagios/Icinga plugin to check gnocchi status
 
-    This corresponds to the output of 'gnocchi status'.
+This corresponds to the output of 'gnocchi status'.
 """
 
-import openstacknagios.openstacknagios as osnag
 from gnocchiclient import auth
 from gnocchiclient.v1.client import Client
+
+import openstacknagios.openstacknagios as osnag
 
 
 class Gnocchi(osnag.Resource):
@@ -38,14 +41,13 @@ class Gnocchi(osnag.Resource):
         osnag.Resource.__init__(self)
 
     def get_client(self):
-
         try:
-           client=Client( session  = self.get_session())
+            client = Client(session=self.get_session())
         except Exception as e:
-           self.exit_error(str(e))
+            self.exit_error(str(e))
 
         return client
 
-if __name__ == '__main__':
-    main()
 
+if __name__ == "__main__":
+    main()
