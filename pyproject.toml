@@ -1,0 +1,59 @@
+[project]
+name = "openstacknagios"
+version = "1.5.0"
+description = "nagios/icinga plugins to monitor an openstack installation"
+authors = [
+    { name = "Jan Graichen", email = "jan.graichen@hpi.de" },
+    { name = "Benedikt Trefzer", email = "benedikt.trefzer@cirrax.com" },
+]
+dependencies = [
+    "gnocchiclient",
+    "nagiosplugin",
+    "pankoclient",
+    "python-ceilometerclient",
+    "python-cinderclient",
+    "python-glanceclient",
+    "python-keystoneclient",
+    "python-neutronclient",
+    "python-novaclient",
+]
+requires-python = ">=3.7"
+readme = "README.md"
+license = { text = "GPLv3" }
+keywords = ["openstack icinga nagios check"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.2",
+    "Programming Language :: Python :: 3.3",
+    "Programming Language :: Python :: 3.4",
+    "Programming Language :: Python :: 3.7",
+    "Topic :: System :: Monitoring",
+]
+
+[project.urls]
+Homepage = "https://github.com/cirrax/openstack-nagios-plugins"
+
+[project.scripts]
+check_ceilometer-statistics = "openstacknagios.ceilometer.Statistics:main"
+check_cinder-services = "openstacknagios.cinder.Services:main"
+check_glance-images = "openstacknagios.glance.Images:main"
+check_gnocchi-measures = "openstacknagios.gnocchi.Measures:main"
+check_gnocchi-status = "openstacknagios.gnocchi.Status:main"
+check_keystone-token = "openstacknagios.keystone.Token:main"
+check_neutron-agents = "openstacknagios.neutron.Agents:main"
+check_neutron-floatingips = "openstacknagios.neutron.Floatingips:main"
+check_neutron-networkipavailabilities = "openstacknagios.neutron.Networkipavailabilities:main"
+check_neutron-routers = "openstacknagios.neutron.Routers:main"
+check_nova-hypervisors = "openstacknagios.nova.Hypervisors:main"
+check_nova-services = "openstacknagios.nova.Services:main"
+check_panko-events = "openstacknagios.panko.Events:main"
+check_rally-results = "openstacknagios.rally.Results:main"
+
+[tool.pdm]
+
+[build-system]
+requires = ["pdm-pep517>=1.0.0"]
+build-backend = "pdm.pep517.api"
