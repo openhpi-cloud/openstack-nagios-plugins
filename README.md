@@ -1,12 +1,10 @@
-openstack-nagios-plugins
-========================
+# openstack-nagios-plugins
 
 Nagios/icinga plugins to monitor an openstack installation.
 
 Find also some information about these plugins in the talk
 [Monitoring an Openstack Cluster with icinga/nagios](https://www.cirrax.com/downloads/2015_OpenstackMonitoring.pdf)
 held at the 11th Swiss OpenStack User Group Meetup by [Cirrax](https://www.cirrax.com).
-
 
 For all checks there are some common arguments:
 
@@ -28,14 +26,14 @@ For all checks there are some common arguments:
 
 Currently the following checks are implemented:
 
-check\_cinder-services
----------------------
+## check_cinder-services
 
 Nagios/Icinga plugin to check running cinder agents/services.
 
 This corresponds to the output of 'cinder service-list'.
 
 optional arguments:
+
 ```
   -w RANGE, --warn RANGE
                         return warning if number of up agents is outside RANGE
@@ -60,12 +58,13 @@ optional arguments:
 
 Admin rights are necessary to run this check.
 
-check\_neutron-agents
---------------------
-Nagios/Icinga plugin to check running neutron agents. 
+## check_neutron-agents
+
+Nagios/Icinga plugin to check running neutron agents.
 This corresponds to the output of 'neutron agent-list'.
 
 optional arguments:
+
 ```
   -w RANGE, --warn RANGE
                         return warning if number of up agents is outside RANGE
@@ -90,16 +89,15 @@ optional arguments:
 
 Admin rights are necessary to run this check.
 
-
-check\_neutron-floatingips
--------------------------
+## check_neutron-floatingips
 
 Nagios/Icinga plugin to check floating ip's.
-Counts the assigned ip's (= used + unused). 
+Counts the assigned ip's (= used + unused).
 
 This corresponds to the output of 'neutron floatingip-list'.
 
 optional arguments:
+
 ```
   -w RANGE, --warn RANGE
                         return warning if number of assigned floating ip's is
@@ -113,15 +111,14 @@ optional arguments:
 
 Admin rights are necessary to run this check.
 
-
-check\_nova-services
--------------------
+## check_nova-services
 
 Nagios/Icinga plugin to check running nova services.
 
 This corresponds to the output of 'nova service-list'.
 
 optional arguments:
+
 ```
   -w RANGE, --warn RANGE
                         return warning if number of up agents is outside RANGE
@@ -146,15 +143,14 @@ optional arguments:
 
 Admin rights are necessary to run this check.
 
-
-check\_nova-hypervisors
-----------------------
+## check_nova-hypervisors
 
 Nagios/Icinga plugin to check nova hypervisors.
 
 This corresponds to the output of 'nova hypervisor-stats'
 
 optional arguments:
+
 ```
   -H HOST, --host HOST  hostname where the hypervisor is running if not
                         defined (default), summary of all hosts is used
@@ -193,13 +189,12 @@ optional arguments:
 
 Admin rights are necessary to run this check.
 
-check\_ceilometer-statistics
----------------------------
+## check_ceilometer-statistics
+
 Nagios/Icinga plugin to check ceilometer statistics. Returns the statistic of
 the chosen meter. This also returns the age of the last sample used to
 aggregate. So this check can also be used to verify freshness of samples in
 the ceilometer DB. (or of course to check the value).
-
 
 ```
   -m METER_NAME, --meter METER_NAME
@@ -230,8 +225,7 @@ the ceilometer DB. (or of course to check the value).
                         (avg is the default)
 ```
 
-check\_keystone-token
---------------------
+## check_keystone-token
 
 Nagios/Icinga plugin to check keystone. The check will get a token and mesure the
 time used.
@@ -245,19 +239,16 @@ time used.
                         RANGE (default 1:, never critical)
 ```
 
-check\_rally-results
--------------------
+## check_rally-results
 
 Nagios/Icinga plugin to check rally results. Takes the outpup of 'rally task
 results' as input on stdin. and calculates the sum of load- and full- duration
 and the number of failed scenarios.
 
-check_glance-images
------------------
+## check_glance-images
 
 Lists glance images and gets timing
 
-check_neutron-routers
----------------------
+## check_neutron-routers
 
 Determines the number down/build/active routers
