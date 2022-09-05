@@ -36,7 +36,7 @@ from nagiosplugin.metric import Metric
 import openstacknagios.openstacknagios as osnag
 
 
-class KeystoneToken(osnag.Resource):
+class KeystoneStatus(osnag.Resource):
     """
     Nagios/Icinga plugin to check keystone.
     """
@@ -89,4 +89,4 @@ class KeystoneToken(osnag.Resource):
 
 
 if __name__ == "__main__":
-    osnag.run_check(KeystoneToken)
+    osnag.run_check(KeystoneStatus)
