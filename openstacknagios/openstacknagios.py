@@ -18,9 +18,13 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import argparse
+import re
 import sys
-from argparse import ArgumentParser, Namespace, _ArgumentGroup
-from typing import Type
+from argparse import SUPPRESS, ArgumentParser, Namespace, _ArgumentGroup
+from email.policy import default
+from pprint import pprint
+from typing import Any, Dict, Type
 
 import nagiosplugin
 import openstack
@@ -31,6 +35,8 @@ from nagiosplugin import Check
 from nagiosplugin import Resource as NagiosResource
 from nagiosplugin import Summary as NagiosSummary
 from openstack.config.cloud_region import CloudRegion
+
+from openstacknagios.icinga import generate_command_definition
 
 
 class Resource(NagiosResource):
@@ -117,6 +123,17 @@ class Summary(NagiosSummary):
 def run_check(resource_class: Type[Resource]):
     parser = ArgumentParser(description=resource_class.__doc__)
 
+    parser.add_argument(
+        "--print-command-definition",
+        action="store_true",
+    )
+
+    # Parse once to check if --print-command-definition has been
+    # specified. We parse here, to avoid having required arguments added
+    # later being required to print the command definition.
+    args, _ = parser.parse_known_args()
+
+    # Argument group for check arguments
     options = parser.add_argument_group("Check Options")
 
     options.add_argument(
@@ -151,6 +168,15 @@ def run_check(resource_class: Type[Resource]):
 
     # Add OpenStack arguments to our parser
     config.register_argparse_arguments(parser, sys.argv)
+
+    # If --print-command-definition has been parsed above, stop
+    # processing and generate an icinga command definition based on all
+    # added checks.
+    if args.print_command_definition:
+        print(generate_command_definition(resource_class, parser))
+        sys.exit(0)
+
+    # Finally parse all arguments
     args = parser.parse_args()
 
     # Load region configuration

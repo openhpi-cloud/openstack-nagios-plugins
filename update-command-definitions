@@ -1,0 +1,51 @@
+#!/bin/bash
+# vim: ft=shell
+
+FILE=${FILE:-"contrib/icinga2-command-definitions.conf"}
+
+CHECKS=(
+    openstacknagios/ceilometer/statistics.py
+    openstacknagios/cinder/services.py
+    openstacknagios/glance/images.py
+    openstacknagios/gnocchi/measures.py
+    openstacknagios/gnocchi/status.py
+    openstacknagios/keystone/status.py
+    openstacknagios/neutron/agents.py
+    openstacknagios/neutron/floating_ips.py
+    openstacknagios/neutron/network_ip_availability.py
+    openstacknagios/neutron/routers.py
+    openstacknagios/nova/hypervisors.py
+    openstacknagios/nova/services.py
+    openstacknagios/panko/events.py
+    openstacknagios/rally/results.py
+)
+
+echo "# vim: ft=icinga" > "$FILE"
+echo <<-EOF >> "$FILE"
+
+/* command objects for the nagios-openstack-plugins
+ * used by icinga2
+ *
+ * Copyright (C) 2018  Cirrax GmbH  http://www.cirrax.com
+ * Benedikt Trefzer <benedikt.trefzer@cirrax.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+*/
+
+EOF
+
+for check in ${CHECKS[@]}; do
+    PYTHONPATH=. pdm run python "$check" --print-command-definition >> "$FILE"
+done
