@@ -18,12 +18,11 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import configparser
 import sys
 from argparse import ArgumentParser as ArgArgumentParser
-from os import environ as env
 
-from keystoneauth1 import loading, session
+import openstack
+import openstack.connection
 from nagiosplugin import Check, Metric
 from nagiosplugin import Resource as NagiosResource
 from nagiosplugin import ScalarContext
@@ -36,58 +35,11 @@ class Resource(NagiosResource):
     Openstack specific
     """
 
-    def get_openstack_vars(self, args=None):
-        os_vars = dict(
-            username="",
-            password="",
-            project_name="",
-            auth_url="",
-            cacert="",
-            user_domain_name="",
-            project_domain_name="",
-        )
-
-        if args.filename:
-            config = configparser.RawConfigParser()
-            config.read(args.filename)
-            try:
-                for r in os_vars.keys():
-                    try:
-                        os_vars[r] = config.get("DEFAULT", r)
-                    except:
-                        os_vars[r] = None
-
-            except Exception as e:
-                self.exit_error(str(e) + " Filename: " + args.filename)
-
-        else:
-            try:
-                for r in os_vars.keys():
-                    try:
-                        os_vars[r] = env["OS_" + r.upper()]
-                    except:
-                        os_vars[r] = None
-            except Exception as e:
-                self.exit_error("missing environment variable " + str(e))
-
-        os_vars["insecure"] = args.insecure
-        return os_vars
-
-    def get_session(self):
-        loader = loading.get_plugin_loader("password")
-        auth = loader.load_from_options(
-            auth_url=self.openstack["auth_url"],
-            username=self.openstack["username"],
-            password=self.openstack["password"],
-            project_name=self.openstack["project_name"],
-            user_domain_name=self.openstack["user_domain_name"],
-            project_domain_name=self.openstack["project_domain_name"],
-        )
-
-        return session.Session(
-            auth=auth,
-            verify=self.openstack["cacert"],
-        )
+    @property
+    def session(self):
+        connection = openstack.connect()
+        connection.authorize()
+        return connection.session
 
     def exit_error(self, text):
         print("UNKNOWN - {}".format(text))
@@ -118,10 +70,6 @@ class ArgumentParser(ArgArgumentParser):
         ArgArgumentParser.__init__(self, description=description, epilog=epilog)
 
         self.add_argument(
-            "--filename",
-            help="file to read openstack credentials from. If not set it take the environment variables",
-        )
-        self.add_argument(
             "-v",
             "--verbose",
             action="count",
@@ -134,18 +82,4 @@ class ArgumentParser(ArgArgumentParser):
             type=int,
             default=10,
             help="amount of seconds until execution stops with unknown state (default 10 seconds)",
-        )
-        self.add_argument(
-            "--insecure",
-            default=False,
-            action="store_true",
-            help='Explicitly allow client to perform "insecure" '
-            "SSL (https) requests. The server's certificate will "
-            "not be verified against any certificate authorities. "
-            "This option should be used with caution.",
-        )
-        self.add_argument(
-            "--cacert",
-            help="Specify a CA bundle file to use in verifying a TLS"
-            "(https) server certificate.",
         )

@@ -37,18 +37,9 @@ class NeutronRouters(osnag.Resource):
     Determines the number down/build/active routers
     """
 
-    def __init__(self, args=None):
-        self.openstack = self.get_openstack_vars(args=args)
-        osnag.Resource.__init__(self)
-
     def probe(self):
         try:
-            neutron = client.Client(
-                "2.0",
-                session=self.get_session(),
-                ca_cert=self.openstack["cacert"],
-                insecure=self.openstack["insecure"],
-            )
+            neutron = client.Client("2.0", session=self.session)
         except Exception as e:
             self.exit_error("cannot load " + str(e))
 
@@ -109,7 +100,7 @@ def main():
     args = argp.parse_args()
 
     check = osnag.Check(
-        NeutronRouters(args=args),
+        NeutronRouters(),
         osnag.ScalarContext("active"),
         osnag.ScalarContext("down", args.warn, args.critical),
         osnag.ScalarContext("build", args.warn_build, args.critical_build),

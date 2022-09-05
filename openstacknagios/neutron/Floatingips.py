@@ -32,21 +32,11 @@ import openstacknagios.openstacknagios as osnag
 class NeutronFloatingips(osnag.Resource):
     """
     Determines the number of assigned (used and unused) floating ip's
-
     """
-
-    def __init__(self, args=None):
-        self.openstack = self.get_openstack_vars(args=args)
-        osnag.Resource.__init__(self)
 
     def probe(self):
         try:
-            neutron = client.Client(
-                "2.0",
-                session=self.get_session(),
-                ca_cert=self.openstack["cacert"],
-                insecure=self.openstack["insecure"],
-            )
+            neutron = client.Client("2.0", session=self.session)
         except Exception as e:
             self.exit_error("cannot load " + str(e))
 
@@ -88,7 +78,7 @@ def main():
     args = argp.parse_args()
 
     check = osnag.Check(
-        NeutronFloatingips(args=args),
+        NeutronFloatingips(),
         osnag.ScalarContext("assigned", args.warn, args.critical),
         osnag.ScalarContext("used"),
         osnag.Summary(show=["assigned", "used"]),

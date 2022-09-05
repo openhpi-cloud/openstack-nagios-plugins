@@ -32,22 +32,15 @@ import openstacknagios.openstacknagios as osnag
 class NovaHypervisors(osnag.Resource):
     """
     Determines the status of the nova hypervisors.
-
     """
 
-    def __init__(self, host=None, args=None):
+    def __init__(self, host=None):
+        super().__init__()
         self.host = host
-        self.openstack = self.get_openstack_vars(args=args)
 
     def probe(self):
         try:
-            nova = Client(
-                "2.1",
-                session=self.get_session(),
-                cacert=self.openstack["cacert"],
-                insecure=self.openstack["insecure"],
-            )
-
+            nova = Client("2.1", session=self.session)
         except Exception as e:
             self.exit_error(str(e))
 
@@ -159,7 +152,7 @@ def main():
     args = argp.parse_args()
 
     check = osnag.Check(
-        NovaHypervisors(args=args, host=args.host),
+        NovaHypervisors(host=args.host),
         osnag.ScalarContext("running_vms", args.warn, args.critical),
         osnag.ScalarContext("vcpus_used", args.warn_vcpus, args.critical_vcpus),
         osnag.ScalarContext(

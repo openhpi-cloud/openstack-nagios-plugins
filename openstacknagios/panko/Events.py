@@ -33,16 +33,10 @@ class PankoEvents(osnag.Resource):
     Lists panko events
     """
 
-    def __init__(self, args=None):
-        self.openstack = self.get_openstack_vars(args=args)
-        osnag.Resource.__init__(self)
-
     def probe(self):
         start = time.time()
         try:
-            panko = Client(
-                session=self.get_session(),
-            )
+            panko = Client(session=self.session)
             # print panko.event.list()
         except Exception as e:
             self.exit_error(str(e))

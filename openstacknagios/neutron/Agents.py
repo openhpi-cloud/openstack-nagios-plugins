@@ -32,23 +32,17 @@ import openstacknagios.openstacknagios as osnag
 class NeutronAgents(osnag.Resource):
     """
     Determines the status of the neutron agents.
-
     """
 
-    def __init__(self, binary=None, host=None, args=None):
+    def __init__(self, binary=None, host=None):
+        super().__init__()
+
         self.binary = binary
         self.host = host
-        self.openstack = self.get_openstack_vars(args=args)
-        osnag.Resource.__init__(self)
 
     def probe(self):
         try:
-            neutron = client.Client(
-                "2.0",
-                session=self.get_session(),
-                ca_cert=self.openstack["cacert"],
-                insecure=self.openstack["insecure"],
-            )
+            neutron = client.Client("2.0", session=self.session)
         except Exception as e:
             self.exit_error("cannot load " + str(e))
 
@@ -129,7 +123,7 @@ def main():
     args = argp.parse_args()
 
     check = osnag.Check(
-        NeutronAgents(args=args, host=args.host, binary=args.binary),
+        NeutronAgents(host=args.host, binary=args.binary),
         osnag.ScalarContext("up", args.warn, args.critical),
         osnag.ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
         osnag.ScalarContext("down", args.warn_down, args.critical_down),

@@ -34,21 +34,15 @@ class NovaServices(osnag.Resource):
     Determines the status of the nova services.
     """
 
-    def __init__(self, binary=None, host=None, args=None):
+    def __init__(self, binary=None, host=None):
+        super().__init__()
+
         self.binary = binary
         self.host = host
-        self.openstack = self.get_openstack_vars(args=args)
-        osnag.Resource.__init__(self)
 
     def probe(self):
-
         try:
-            nova = Client(
-                "2.1",
-                session=self.get_session(),
-                cacert=self.openstack["cacert"],
-                insecure=self.openstack["insecure"],
-            )
+            nova = Client("2.1", session=self.session)
         except Exception as e:
             self.exit_error(str(e))
 
@@ -124,7 +118,7 @@ def main():
     args = argp.parse_args()
 
     check = osnag.Check(
-        NovaServices(args=args, host=args.host, binary=args.binary),
+        NovaServices(host=args.host, binary=args.binary),
         osnag.ScalarContext("up", args.warn, args.critical),
         osnag.ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
         osnag.ScalarContext("down", args.warn_down, args.critical_down),

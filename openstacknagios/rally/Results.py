@@ -34,6 +34,8 @@ import openstacknagios.openstacknagios as osnag
 
 class RallyResults(osnag.Resource):
     def __init__(self, args=None):
+        super().__init__()
+
         if args.resultfile:
             infile = open(args.resultfile, "r")
 
@@ -44,8 +46,6 @@ class RallyResults(osnag.Resource):
                     raise SystemExit(sys.exc_info()[1])
         else:
             self.results = json.load(sys.stdin)
-
-        osnag.Resource.__init__(self)
 
     def probe(self):
         full_duration = 0

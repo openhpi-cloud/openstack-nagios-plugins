@@ -30,19 +30,13 @@ class NeutronNetworkipavailabilities(osnag.Resource):
     Determines the number of total and used neutron network ip's
     """
 
-    def __init__(self, args=None):
+    def __init__(self, args):
+        super().__init__()
         self.network_uuid = args.network_uuid
-        self.openstack = self.get_openstack_vars(args=args)
-        osnag.Resource.__init__(self)
 
     def probe(self):
         try:
-            neutron = client.Client(
-                "2.0",
-                session=self.get_session(),
-                ca_cert=self.openstack["cacert"],
-                insecure=self.openstack["insecure"],
-            )
+            neutron = client.Client("2.0", session=self.session)
         except Exception as e:
             self.exit_error("cannot load " + str(e))
 
