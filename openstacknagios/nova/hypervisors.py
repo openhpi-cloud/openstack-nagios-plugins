@@ -39,20 +39,14 @@ class NovaHypervisors(osnag.Resource):
         self.host = host
 
     def probe(self):
-        try:
-            nova = Client("2.1", session=self.session)
-        except Exception as e:
-            self.exit_error(str(e))
+        nova = Client("2.1", session=self.session)
 
-        try:
-            if self.host:
-                result = nova.hypervisors.get(
-                    nova.hypervisors.find(hypervisor_hostname=self.host)
-                )
-            else:
-                result = nova.hypervisors.statistics()
-        except Exception as e:
-            self.exit_error(str(e))
+        if self.host:
+            result = nova.hypervisors.get(
+                nova.hypervisors.find(hypervisor_hostname=self.host)
+            )
+        else:
+            result = nova.hypervisors.statistics()
 
         yield osnag.Metric("vcpus_used", result.vcpus_used, min=0, max=result.vcpus)
         yield osnag.Metric(
@@ -100,27 +94,27 @@ def main():
         "--warn_memory",
         metavar="RANGE",
         default="0:",
-        help="return warning if used memory is outside RANGE (default: 0:, never warn",
+        help="return warning if used memory is outside RANGE (default: 0:, never warn)",
     )
     argp.add_argument(
         "--critical_memory",
         metavar="RANGE",
         default="0:",
-        help="return critical if used memory is outside RANGE (default: 0:, never critical",
+        help="return critical if used memory is outside RANGE (default: 0:, never critical)",
     )
 
     argp.add_argument(
         "--warn_memory_percent",
         metavar="RANGE",
         default="0:90",
-        help="return warning if used memory is outside percent RANGE (default: 0:90, warn if 90%% of memory is used",
+        help="return warning if used memory is outside percent RANGE (default: 0:90, warn if 90%% of memory is used)",
     )
 
     argp.add_argument(
         "--critical_memory_percent",
         metavar="RANGE",
         default="0:95",
-        help="return critical if used memory is outside percent RANGE (default: 0:90, critical if 95%% of memory is used",
+        help="return critical if used memory is outside percent RANGE (default: 0:90, critical if 95%% of memory is used)",
     )
 
     argp.add_argument(
@@ -133,7 +127,7 @@ def main():
         "--critical_vcpus",
         metavar="RANGE",
         default="0:",
-        help="return critical if used vcpus is outside RANGE (default: 0, always critical if any",
+        help="return critical if used vcpus is outside RANGE (default: 0, always critical if any)",
     )
 
     argp.add_argument(
@@ -146,7 +140,7 @@ def main():
         "--critical_vcpus_percent",
         metavar="RANGE",
         default="0:95",
-        help="return critical if used vcpus is outside percent RANGE (default: 0:95, critical if 95%% of vcpus are used",
+        help="return critical if used vcpus is outside percent RANGE (default: 0:95, critical if 95%% of vcpus are used)",
     )
 
     args = argp.parse_args()

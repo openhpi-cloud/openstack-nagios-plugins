@@ -38,15 +38,8 @@ class NeutronRouters(osnag.Resource):
     """
 
     def probe(self):
-        try:
-            neutron = client.Client("2.0", session=self.session)
-        except Exception as e:
-            self.exit_error("cannot load " + str(e))
-
-        try:
-            result = neutron.list_routers()
-        except Exception as e:
-            self.exit_error(str(e))
+        neutron = client.Client("2.0", session=self.session)
+        result = neutron.list_routers()
 
         stati = dict(active=0, down=0, build=0)
 

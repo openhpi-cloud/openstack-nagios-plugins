@@ -35,11 +35,9 @@ class PankoEvents(osnag.Resource):
 
     def probe(self):
         start = time.time()
-        try:
-            panko = Client(session=self.session)
-            # print panko.event.list()
-        except Exception as e:
-            self.exit_error(str(e))
+
+        panko = Client(session=self.session)
+        # print panko.event.list()
 
         get_time = time.time()
 

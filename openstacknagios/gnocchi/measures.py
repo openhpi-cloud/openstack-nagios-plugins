@@ -37,17 +37,13 @@ class GnocchiMeasures(gnocchi.Gnocchi):
 
     def probe(self):
         client = self.get_client()
-
-        try:
-            result = client.status.get()["storage"]["summary"]
-            result = client.aggregates.fetch(
-                operations="(metric {} mean)".format(self.args.metric),
-                search="project_id={}".format(self.args.project_id),
-                start=self.args.start,
-                stop=self.args.stop,
-            )["measures"]
-        except Exception as e:
-            self.exit_error(str(e))
+        result = client.status.get()["storage"]["summary"]
+        result = client.aggregates.fetch(
+            operations=f"(metric {self.args.metric} mean)",
+            search=f"project_id={self.args.project_id}",
+            start=self.args.start,
+            stop=self.args.stop,
+        )["measures"]
 
         count = 0
         for res in result:
@@ -92,7 +88,7 @@ def main():
         "--project_id",
         metavar="PROJECT_ID",
         required=True,
-        help="project id to query (mandatory, since otherwise query takes too long !)",
+        help="project id to query (mandatory, since otherwise query takes too long!)",
     )
 
     argp.add_argument(

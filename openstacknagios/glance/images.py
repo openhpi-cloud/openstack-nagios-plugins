@@ -35,20 +35,11 @@ class GlanceImages(osnag.Resource):
     Lists glance images and gets timing
     """
 
-    def __init__(self, args=None):
-        self.openstack = self.get_openstack_vars(args=args)
-        osnag.Resource.__init__(self)
-
     def probe(self):
         start = time.time()
-        try:
-            glance = Client(
-                "2",
-                session=self.get_session,
-            )
-            glance.images.list()
-        except Exception as e:
-            self.exit_error(str(e))
+
+        glance = Client("2", session=self.session)
+        glance.images.list()
 
         get_time = time.time()
 

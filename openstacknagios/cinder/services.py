@@ -34,45 +34,30 @@ class CinderServices(osnag.Resource):
     Determines the status of the cinder agents/services.
     """
 
-    def __init__(self, binary=None, host=None, args=None):
+    def __init__(self, binary=None, host=None):
+        super().__init__()
         self.binary = binary
         self.host = host
-        self.openstack = self.get_openstack_vars(args=args)
-        osnag.Resource.__init__(self)
 
     def probe(self):
-
-        try:
-            cinder = Client(
-                "3",
-                session=self.get_session(),
-                insecure=self.openstack["insecure"],
-                cacert=self.openstack["cacert"],
-            )
-        except Exception as e:
-            self.exit_error(str(e))
-
-        try:
-            result = cinder.services.list()
-        except Exception as e:
-            self.exit_error(str(e))
-
-        stati = dict(up=0, disabled=0, down=0, total=0)
+        cinder = Client("3", session=self.session)
+        result = cinder.services.list()
+        stats = dict(up=0, disabled=0, down=0, total=0)
 
         for agent in result:
-            if (self.host == None or self.host == agent.host) and (
-                self.binary == None or self.binary == agent.binary
+            if (self.host is None or self.host == agent.host) and (
+                self.binary is None or self.binary == agent.binary
             ):
-                stati["total"] += 1
+                stats["total"] += 1
                 if agent.status == "enabled" and agent.state == "up":
-                    stati["up"] += 1
+                    stats["up"] += 1
                 elif agent.status == "disabled":
-                    stati["disabled"] += 1
+                    stats["disabled"] += 1
                 else:
-                    stati["down"] += 1
+                    stats["down"] += 1
 
-        for r in stati.keys():
-            yield osnag.Metric(r, stati[r], min=0)
+        for r in stats.keys():
+            yield osnag.Metric(r, stats[r], min=0)
 
 
 @osnag.guarded
@@ -98,13 +83,13 @@ def main():
         "--warn_disabled",
         metavar="RANGE",
         default="@1:",
-        help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents",
+        help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents)",
     )
     argp.add_argument(
         "--critical_disabled",
         metavar="RANGE",
         default="0:",
-        help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical",
+        help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical)",
     )
     argp.add_argument(
         "--warn_down",
@@ -127,7 +112,7 @@ def main():
     args = argp.parse_args()
 
     check = osnag.Check(
-        CinderServices(args=args, host=args.host, binary=args.binary),
+        CinderServices(host=args.host, binary=args.binary),
         osnag.ScalarContext("up", args.warn, args.critical),
         osnag.ScalarContext("disabled", args.warn_disabled, args.critical_disabled),
         osnag.ScalarContext("down", args.warn_down, args.critical_down),

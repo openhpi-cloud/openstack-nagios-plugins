@@ -35,37 +35,20 @@ import openstacknagios.openstacknagios as osnag
 class KeystoneToken(osnag.Resource):
     """
     Nagios/Icinga plugin to check keystone.
-
     """
 
     def __init__(self, args=None):
-        self.openstack = self.get_openstack_vars(args=args)
-        self.tversion = args.tversion
-
-        osnag.Resource.__init__(self)
+        super().__init__()
+        self.token_version = args.tversion
 
     def probe(self):
         start = time.time()
-        if self.tversion == "2":
-            try:
-                keystone = ksclient2.Client(
-                    session=self.get_session(),
-                    cacert=self.openstack["cacert"],
-                    insecure=self.openstack["insecure"],
-                )
-            except Exception as e:
-                self.exit_error("cannot get token")
-        elif self.tversion == "3":
-            try:
-                keystone = ksclient3.Client(
-                    session=self.get_session(),
-                    cacert=self.openstack["cacert"],
-                    insecure=self.openstack["insecure"],
-                )
-            except Exception as e:
-                self.exit_error("cannot get token")
+        if self.token_version == "2":
+            ksclient2.Client(session=self.session)
+        elif self.token_version == "3":
+            ksclient3.Client(session=self.session)
         else:
-            self.exit_error("unknown token-version " + self.tversion)
+            raise ValueError(f"Unknown token-version: {self.token_version}")
 
         get_time = time.time()
 

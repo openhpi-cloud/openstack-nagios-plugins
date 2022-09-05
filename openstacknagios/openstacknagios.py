@@ -41,10 +41,6 @@ class Resource(NagiosResource):
         connection.authorize()
         return connection.session
 
-    def exit_error(self, text):
-        print("UNKNOWN - {}".format(text))
-        sys.exit(3)
-
 
 class Summary(NagiosSummary):
     """Create status line with info"""

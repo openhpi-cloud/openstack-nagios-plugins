@@ -24,7 +24,6 @@ Nagios/Icinga plugin to check gnocchi status
 This corresponds to the output of 'gnocchi status'.
 """
 
-from gnocchiclient import auth
 from gnocchiclient.v1.client import Client
 
 import openstacknagios.openstacknagios as osnag
@@ -40,9 +39,4 @@ class Gnocchi(osnag.Resource):
         self.args = args
 
     def get_client(self):
-        try:
-            client = Client(session=self.session)
-        except Exception as e:
-            self.exit_error(str(e))
-
-        return client
+        return Client(session=self.session)

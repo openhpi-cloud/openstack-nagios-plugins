@@ -35,24 +35,17 @@ class NeutronNetworkIPAvailability(osnag.Resource):
         self.network_uuid = args.network_uuid
 
     def probe(self):
-        try:
-            neutron = client.Client("2.0", session=self.session)
-        except Exception as e:
-            self.exit_error("cannot load " + str(e))
-
-        try:
-            result = neutron.show_network_ip_availability(self.network_uuid)
-        except Exception as e:
-            self.exit_error(str(e))
+        neutron = client.Client("2.0", session=self.session)
+        result = neutron.show_network_ip_availability(self.network_uuid)
 
         net_ip = result["network_ip_availability"]
 
-        stati = dict(total=0, used=0)
-        stati["total"] = net_ip["total_ips"]
-        stati["used"] = net_ip["used_ips"]
+        stats = dict(total=0, used=0)
+        stats["total"] = net_ip["total_ips"]
+        stats["used"] = net_ip["used_ips"]
 
-        for r in stati.keys():
-            yield osnag.Metric(r, stati[r], min=0)
+        for r in stats.keys():
+            yield osnag.Metric(r, stats[r], min=0)
 
 
 @osnag.guarded

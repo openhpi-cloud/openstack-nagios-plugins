@@ -41,36 +41,30 @@ class NeutronAgents(osnag.Resource):
         self.host = host
 
     def probe(self):
-        try:
-            neutron = client.Client("2.0", session=self.session)
-        except Exception as e:
-            self.exit_error("cannot load " + str(e))
+        neutron = client.Client("2.0", session=self.session)
 
-        try:
-            if self.host and self.binary:
-                result = neutron.list_agents(host=self.host, binary=self.binary)
-            elif self.binary:
-                result = neutron.list_agents(binary=self.binary)
-            elif self.host:
-                result = neutron.list_agents(host=self.host)
-            else:
-                result = neutron.list_agents()
-        except Exception as e:
-            self.exit_error(str(e))
+        if self.host and self.binary:
+            result = neutron.list_agents(host=self.host, binary=self.binary)
+        elif self.binary:
+            result = neutron.list_agents(binary=self.binary)
+        elif self.host:
+            result = neutron.list_agents(host=self.host)
+        else:
+            result = neutron.list_agents()
 
-        stati = dict(up=0, disabled=0, down=0, total=0)
+        stats = dict(up=0, disabled=0, down=0, total=0)
 
         for agent in result["agents"]:
-            stati["total"] += 1
+            stats["total"] += 1
             if agent["admin_state_up"] and agent["alive"]:
-                stati["up"] += 1
+                stats["up"] += 1
             elif not agent["admin_state_up"]:
-                stati["disabled"] += 1
+                stats["disabled"] += 1
             else:
-                stati["down"] += 1
+                stats["down"] += 1
 
-        for r in stati.keys():
-            yield osnag.Metric(r, stati[r], min=0)
+        for r in stats.keys():
+            yield osnag.Metric(r, stats[r], min=0)
 
 
 @osnag.guarded
@@ -96,13 +90,13 @@ def main():
         "--warn_disabled",
         metavar="RANGE",
         default="@1:",
-        help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents",
+        help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents)",
     )
     argp.add_argument(
         "--critical_disabled",
         metavar="RANGE",
         default="0:",
-        help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical",
+        help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical)",
     )
     argp.add_argument(
         "--warn_down",
@@ -114,7 +108,7 @@ def main():
         "--critical_down",
         metavar="RANGE",
         default="0",
-        help="return critical if number of down agents is outside RANGE (default: 0, always critical if any",
+        help="return critical if number of down agents is outside RANGE (default: 0, always critical if any)",
     )
 
     argp.add_argument("--binary", dest="binary", default="", help="filter agent binary")

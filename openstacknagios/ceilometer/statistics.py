@@ -50,14 +50,11 @@ class CeilometerStatistics(osnag.Resource):
         osnag.Resource.__init__(self)
 
     def probe(self):
-        try:
-            ceilometer = ceilclient.Client(
-                session=self.get_session(),
-                cacert=self.openstack["cacert"],
-                insecure=self.openstack["insecure"],
-            )
-        except Exception as e:
-            self.exit_error("cannot start ceil " + str(e))
+        ceilometer = ceilclient.Client(
+            session=self.get_session(),
+            cacert=self.openstack["cacert"],
+            insecure=self.openstack["insecure"],
+        )
 
         now = datetime.datetime.now(self.tzone)
 
@@ -67,13 +64,10 @@ class CeilometerStatistics(osnag.Resource):
             {"field": "timestamp", "op": "gt", "value": tstart.strftime(date_format)}
         )
 
-        try:
-            teste = ceilometer.statistics.list(self.meter, q=query)
-            # print "meters = %s" % ceilometer.meters.list()
-            # print "resources = %s" % ceilometer.resources.list()
-            # print "alarms = %s" % ceilometer.alarms.list()
-        except Exception as e:
-            self.exit_error("cannot load: " + str(e))
+        teste = ceilometer.statistics.list(self.meter, q=query)
+        # print "meters = %s" % ceilometer.meters.list()
+        # print "resources = %s" % ceilometer.resources.list()
+        # print "alarms = %s" % ceilometer.alarms.list()
 
         for t in teste:
             period_end = self.tzone.localize(

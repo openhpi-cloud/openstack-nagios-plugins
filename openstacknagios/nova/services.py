@@ -41,15 +41,8 @@ class NovaServices(osnag.Resource):
         self.host = host
 
     def probe(self):
-        try:
-            nova = Client("2.1", session=self.session)
-        except Exception as e:
-            self.exit_error(str(e))
-
-        try:
-            result = nova.services.list(host=self.host, binary=self.binary)
-        except Exception as e:
-            self.exit_error(str(e))
+        nova = Client("2.1", session=self.session)
+        result = nova.services.list(host=self.host, binary=self.binary)
 
         stati = dict(up=0, disabled=0, down=0, total=0)
 
@@ -89,13 +82,13 @@ def main():
         "--warn_disabled",
         metavar="RANGE",
         default="@1:",
-        help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents",
+        help="return warning if number of disabled agents is outside RANGE (default: @1:, warn if any disabled agents)",
     )
     argp.add_argument(
         "--critical_disabled",
         metavar="RANGE",
         default="0:",
-        help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical",
+        help="return critical if number of disabled agents is outside RANGE (default: 0:, never critical)",
     )
     argp.add_argument(
         "--warn_down",
@@ -107,7 +100,7 @@ def main():
         "--critical_down",
         metavar="RANGE",
         default="0",
-        help="return critical if number of down agents is outside RANGE (default: 0, always critical if any",
+        help="return critical if number of down agents is outside RANGE (default: 0, always critical if any)",
     )
 
     argp.add_argument(

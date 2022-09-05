@@ -35,25 +35,18 @@ class NeutronFloatingIPs(osnag.Resource):
     """
 
     def probe(self):
-        try:
-            neutron = client.Client("2.0", session=self.session)
-        except Exception as e:
-            self.exit_error("cannot load " + str(e))
+        neutron = client.Client("2.0", session=self.session)
+        result = neutron.list_floatingips()
 
-        try:
-            result = neutron.list_floatingips()
-        except Exception as e:
-            self.exit_error(str(e))
-
-        stati = dict(assigned=0, used=0)
+        stats = dict(assigned=0, used=0)
 
         for floatingip in result["floatingips"]:
-            stati["assigned"] += 1
+            stats["assigned"] += 1
             if floatingip["fixed_ip_address"]:
-                stati["used"] += 1
+                stats["used"] += 1
 
-        for r in stati.keys():
-            yield osnag.Metric(r, stati[r], min=0)
+        for r in stats.keys():
+            yield osnag.Metric(r, stats[r], min=0)
 
 
 @osnag.guarded

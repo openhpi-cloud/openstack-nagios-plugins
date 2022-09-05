@@ -24,22 +24,18 @@ Nagios/Icinga plugin to check gnocchi status
 This corresponds to the output of 'gnocchi status'.
 """
 
-import openstacknagios.gnocchi.Gnocchi as gnocchi
 import openstacknagios.openstacknagios as osnag
+from openstacknagios.gnocchi.gnocchi import Gnocchi
 
 
-class GnocchiStatus(gnocchi.Gnocchi):
+class GnocchiStatus(Gnocchi):
     """
     Determines the status of gnocchi.
     """
 
     def probe(self):
         client = self.get_client()
-
-        try:
-            result = client.status.get()["storage"]["summary"]
-        except Exception as e:
-            self.exit_error(str(e))
+        result = client.status.get()["storage"]["summary"]
 
         # {u'storage': {u'summary': {u'metrics': 98, u'measures': 98}}}
 
@@ -70,13 +66,13 @@ def main():
         "--warn_metrics",
         metavar="RANGE",
         default="0:100",
-        help="return warning if number of metrics having measures to process outside RANGE (default: 0:100",
+        help="return warning if number of metrics having measures to process outside RANGE (default: 0:100)",
     )
     argp.add_argument(
         "--critical_metrics",
         metavar="RANGE",
         default="0:200",
-        help="return critical if number of metrics having measures to process is outside RANGE (default: 0:200",
+        help="return critical if number of metrics having measures to process is outside RANGE (default: 0:200)",
     )
 
     args = argp.parse_args()
