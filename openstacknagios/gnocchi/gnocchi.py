@@ -36,18 +36,13 @@ class Gnocchi(osnag.Resource):
     """
 
     def __init__(self, args=None):
-        self.openstack = self.get_openstack_vars(args=args)
+        super().__init__()
         self.args = args
-        osnag.Resource.__init__(self)
 
     def get_client(self):
         try:
-            client = Client(session=self.get_session())
+            client = Client(session=self.session)
         except Exception as e:
             self.exit_error(str(e))
 
         return client
-
-
-if __name__ == "__main__":
-    main()

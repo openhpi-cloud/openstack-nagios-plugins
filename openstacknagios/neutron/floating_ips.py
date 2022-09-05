@@ -29,7 +29,7 @@ from neutronclient.neutron import client
 import openstacknagios.openstacknagios as osnag
 
 
-class NeutronFloatingips(osnag.Resource):
+class NeutronFloatingIPs(osnag.Resource):
     """
     Determines the number of assigned (used and unused) floating ip's
     """
@@ -78,7 +78,7 @@ def main():
     args = argp.parse_args()
 
     check = osnag.Check(
-        NeutronFloatingips(),
+        NeutronFloatingIPs(),
         osnag.ScalarContext("assigned", args.warn, args.critical),
         osnag.ScalarContext("used"),
         osnag.Summary(show=["assigned", "used"]),

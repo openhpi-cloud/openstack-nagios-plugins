@@ -25,7 +25,7 @@ from neutronclient.neutron import client
 import openstacknagios.openstacknagios as osnag
 
 
-class NeutronNetworkipavailabilities(osnag.Resource):
+class NeutronNetworkIPAvailability(osnag.Resource):
     """
     Determines the number of total and used neutron network ip's
     """
@@ -79,7 +79,7 @@ def main():
     args = argp.parse_args()
 
     check = osnag.Check(
-        NeutronNetworkipavailabilities(args=args),
+        NeutronNetworkIPAvailability(args=args),
         osnag.ScalarContext("total"),
         osnag.ScalarContext("used", args.warn, args.critical),
         osnag.Summary(show=["total", "used"]),

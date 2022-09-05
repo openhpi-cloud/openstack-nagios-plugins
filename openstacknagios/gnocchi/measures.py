@@ -26,7 +26,7 @@ metric. Use a canary project to get measures (query for all available
 projects take to long !)
 """
 
-import openstacknagios.gnocchi.Gnocchi as gnocchi
+import openstacknagios.gnocchi.gnocchi as gnocchi
 import openstacknagios.openstacknagios as osnag
 
 
