@@ -35,33 +35,28 @@ from pytz import timezone
 import openstacknagios.openstacknagios as osnag
 
 # Date format used by ceilometer for queries
-date_format = "%Y-%m-%dT%H:%M:%S"
-date_format_tz = "%Y-%m-%dT%H:%M:%S %Z"
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%S"
+DATE_FORMAT_TZ = "%Y-%m-%dT%H:%M:%S %Z"
 
 
 class CeilometerStatistics(osnag.Resource):
     def __init__(self, args=None):
+        super().__init__()
         self.meter = args.meter
         self.tframe = datetime.timedelta(minutes=int(args.tframe))
         self.tzone = timezone(args.tzone)
         self.verbose = args.verbose
         self.aggregate = args.aggregate
-        self.openstack = self.get_openstack_vars(args=args)
-        osnag.Resource.__init__(self)
 
     def probe(self):
-        ceilometer = ceilclient.Client(
-            session=self.get_session(),
-            cacert=self.openstack["cacert"],
-            insecure=self.openstack["insecure"],
-        )
+        ceilometer = ceilclient.Client(session=self.session)
 
         now = datetime.datetime.now(self.tzone)
 
         tstart = now - self.tframe
         query = []
         query.append(
-            {"field": "timestamp", "op": "gt", "value": tstart.strftime(date_format)}
+            {"field": "timestamp", "op": "gt", "value": tstart.strftime(DATE_FORMAT)}
         )
 
         teste = ceilometer.statistics.list(self.meter, q=query)
@@ -72,7 +67,7 @@ class CeilometerStatistics(osnag.Resource):
         for t in teste:
             period_end = self.tzone.localize(
                 datetime.datetime.strptime(
-                    getattr(t, "period_end", "")[:19], date_format
+                    getattr(t, "period_end", "")[:19], DATE_FORMAT
                 )
             )
             age = now - period_end
@@ -171,26 +166,26 @@ def main():
         "--warn_count",
         metavar="RANGE",
         default="0:",
-        help="return warning if the number of samples is outside RANGE (default: 0:, never warn",
+        help="return warning if the number of samples is outside RANGE (default: 0:, never warn)",
     )
     argp.add_argument(
         "--critical_count",
         metavar="RANGE",
         default="0:",
-        help="return critical if the number of samples is outside RANGE (default: 0:, never critical",
+        help="return critical if the number of samples is outside RANGE (default: 0:, never critical)",
     )
 
     argp.add_argument(
         "--warn_age",
         metavar="RANGE",
         default="0:",
-        help="return warning if the age in minutes of the last value is outside RANGE (default: 0:30, warn if older than 30 minutes",
+        help="return warning if the age in minutes of the last value is outside RANGE (default: 0:30, warn if older than 30 minutes)",
     )
     argp.add_argument(
         "--critical_age",
         metavar="RANGE",
         default="0:",
-        help="return critical if the age in minutes of the last value is outside RANGE (default: 0:60, critical if older than 1 hour",
+        help="return critical if the age in minutes of the last value is outside RANGE (default: 0:60, critical if older than 1 hour)",
     )
 
     argp.add_argument(

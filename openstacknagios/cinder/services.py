@@ -101,7 +101,7 @@ def main():
         "--critical_down",
         metavar="RANGE",
         default="0",
-        help="return critical if number of down agents is outside RANGE (default: 0, always critical if any",
+        help="return critical if number of down agents is outside RANGE (default: 0, always critical if any)",
     )
 
     argp.add_argument(
