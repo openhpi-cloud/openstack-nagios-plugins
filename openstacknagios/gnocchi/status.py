@@ -24,6 +24,7 @@ Nagios/Icinga plugin to check gnocchi status
 This corresponds to the output of 'gnocchi status'.
 """
 
+from nagiosplugin.metric import Metric
 import openstacknagios.openstacknagios as osnag
 from openstacknagios.gnocchi.gnocchi import Gnocchi
 
@@ -39,8 +40,10 @@ class GnocchiStatus(Gnocchi):
 
         # {u'storage': {u'summary': {u'metrics': 98, u'measures': 98}}}
 
-        yield osnag.Metric("measures", result["measures"])
-        yield osnag.Metric("metrics", result["metrics"])
+        return [
+            Metric("measures", result["measures"]),
+            Metric("metrics", result["metrics"]),
+        ]
 
 
 @osnag.guarded

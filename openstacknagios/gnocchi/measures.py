@@ -26,6 +26,7 @@ metric. Use a canary project to get measures (query for all available
 projects take to long !)
 """
 
+from nagiosplugin.metric import Metric
 import openstacknagios.gnocchi.gnocchi as gnocchi
 import openstacknagios.openstacknagios as osnag
 
@@ -49,7 +50,7 @@ class GnocchiMeasures(gnocchi.Gnocchi):
         for res in result:
             count = count + len(result[res][self.args.metric]["mean"])
 
-        yield osnag.Metric("measures", count)
+        return Metric("measures", count)
 
 
 @osnag.guarded

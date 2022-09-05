@@ -30,6 +30,7 @@ the value).
 import datetime
 
 import ceilometerclient.v2.client as ceilclient
+from nagiosplugin.metric import Metric
 from pytz import timezone
 
 import openstacknagios.openstacknagios as osnag
@@ -71,9 +72,18 @@ class CeilometerStatistics(osnag.Resource):
                 )
             )
             age = now - period_end
-            yield osnag.Metric("count", getattr(t, "count", ""), uom="samples")
-            yield osnag.Metric("age", age.total_seconds() / 60, uom="m")
-            yield osnag.Metric(
+
+            yield Metric(
+                "count",
+                getattr(t, "count", ""),
+                uom="samples",
+            )
+            yield Metric(
+                "age",
+                age.total_seconds() / 60,
+                uom="m",
+            )
+            yield Metric(
                 "value",
                 getattr(t, self.aggregate, ""),
                 min=getattr(t, "min", ""),

@@ -20,6 +20,7 @@ Nagios/Icinga plugin to check available IPs
 This corresponds to the output of 'openstack ip availabilities show'.
 """
 
+from nagiosplugin.metric import Metric
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -37,15 +38,13 @@ class NeutronNetworkIPAvailability(osnag.Resource):
     def probe(self):
         neutron = client.Client("2.0", session=self.session)
         result = neutron.show_network_ip_availability(self.network_uuid)
-
         net_ip = result["network_ip_availability"]
 
-        stats = dict(total=0, used=0)
-        stats["total"] = net_ip["total_ips"]
-        stats["used"] = net_ip["used_ips"]
+        return [
+            Metric("total", net_ip["total_ips"], min=0),
+            Metric("used", net_ip["used_ips"], min=0),
+        ]
 
-        for r in stats.keys():
-            yield osnag.Metric(r, stats[r], min=0)
 
 
 @osnag.guarded

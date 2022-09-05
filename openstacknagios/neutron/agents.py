@@ -24,6 +24,7 @@ Nagios/Icinga plugin to check running neutron agents
 This corresponds to the output of 'neutron agent-list'.
 """
 
+from nagiosplugin.metric import Metric
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -52,19 +53,26 @@ class NeutronAgents(osnag.Resource):
         else:
             result = neutron.list_agents()
 
-        stats = dict(up=0, disabled=0, down=0, total=0)
+        agents_up = 0
+        agents_disabled = 0
+        agents_down = 0
+        agents_total = 0
 
         for agent in result["agents"]:
-            stats["total"] += 1
+            agents_total += 1
             if agent["admin_state_up"] and agent["alive"]:
-                stats["up"] += 1
+                agents_up += 1
             elif not agent["admin_state_up"]:
-                stats["disabled"] += 1
+                agents_disabled += 1
             else:
-                stats["down"] += 1
+                agents_down += 1
 
-        for r in stats.keys():
-            yield osnag.Metric(r, stats[r], min=0)
+        return [
+            Metric("up", agents_up, min=0),
+            Metric("disabled", agents_disabled, min=0),
+            Metric("down", agents_down, min=0),
+            Metric("total", agents_total, min=0),
+        ]
 
 
 @osnag.guarded

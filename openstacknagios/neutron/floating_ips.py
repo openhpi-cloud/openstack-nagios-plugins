@@ -24,6 +24,7 @@ Counts the assigned IPs (= used + unused). This corresponds to the
 output of 'neutron floatingip-list'.
 """
 
+from nagiosplugin.metric import Metric
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -38,15 +39,18 @@ class NeutronFloatingIPs(osnag.Resource):
         neutron = client.Client("2.0", session=self.session)
         result = neutron.list_floatingips()
 
-        stats = dict(assigned=0, used=0)
+        assigned = 0
+        used = 0
 
         for floatingip in result["floatingips"]:
-            stats["assigned"] += 1
+            assigned += 1
             if floatingip["fixed_ip_address"]:
-                stats["used"] += 1
+                used += 1
 
-        for r in stats.keys():
-            yield osnag.Metric(r, stats[r], min=0)
+        return [
+            Metric("assigned", assigned, min=0),
+            Metric("used", used, min=0),
+        ]
 
 
 @osnag.guarded

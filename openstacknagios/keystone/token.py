@@ -28,6 +28,7 @@ import time
 
 import keystoneclient.v2_0.client as ksclient2
 import keystoneclient.v3.client as ksclient3
+from nagiosplugin.metric import Metric
 
 import openstacknagios.openstacknagios as osnag
 
@@ -52,7 +53,7 @@ class KeystoneToken(osnag.Resource):
 
         get_time = time.time()
 
-        yield osnag.Metric("gettime", get_time - start, min=0)
+        return Metric("gettime", get_time - start, min=0)
 
 
 @osnag.guarded

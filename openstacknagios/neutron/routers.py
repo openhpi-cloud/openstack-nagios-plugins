@@ -27,6 +27,7 @@ neutron servers without astara extensions.
 This corresponds to the output of 'neutron router-list -c id -c status'.
 """
 
+from nagiosplugin.metric import Metric
 from neutronclient.neutron import client
 
 import openstacknagios.openstacknagios as osnag
@@ -41,18 +42,23 @@ class NeutronRouters(osnag.Resource):
         neutron = client.Client("2.0", session=self.session)
         result = neutron.list_routers()
 
-        stati = dict(active=0, down=0, build=0)
+        active = 0
+        down = 0
+        build = 0
 
         for router in result["routers"]:
             if router["status"] == "ACTIVE":
-                stati["active"] += 1
+                active += 1
             if router["status"] == "DOWN":
-                stati["down"] += 1
+                down += 1
             if router["status"] == "BUILD":
-                stati["build"] += 1
+                build += 1
 
-        for r in stati.keys():
-            yield osnag.Metric(r, stati[r], min=0)
+        return [
+            Metric("active", active, min=0),
+            Metric("down", down, min=0),
+            Metric("build", build, min=0),
+        ]
 
 
 @osnag.guarded

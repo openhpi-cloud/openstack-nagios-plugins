@@ -26,6 +26,7 @@ This corresponds to the output of 'glance image-list'.
 import time
 
 from glanceclient.v2.client import Client
+from nagiosplugin.metric import Metric
 
 import openstacknagios.openstacknagios as osnag
 
@@ -43,7 +44,7 @@ class GlanceImages(osnag.Resource):
 
         get_time = time.time()
 
-        yield osnag.Metric("gettime", get_time - start, min=0)
+        return Metric("gettime", get_time - start, min=0)
 
 
 @osnag.guarded

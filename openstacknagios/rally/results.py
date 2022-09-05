@@ -29,6 +29,7 @@ scenarios.
 import json
 import sys
 
+from nagiosplugin.metric import Metric
 import openstacknagios.openstacknagios as osnag
 
 
@@ -66,11 +67,13 @@ class RallyResults(osnag.Resource):
                     if not sla["success"]:
                         slafail = slafail + 1
 
-        yield osnag.Metric("total", total)
-        yield osnag.Metric("errors", errors)
-        yield osnag.Metric("slafail", slafail)
-        yield osnag.Metric("fulldur", full_duration, uom="s")
-        yield osnag.Metric("loaddur", load_duration, uom="s")
+        return [
+            Metric("total", total),
+            Metric("errors", errors),
+            Metric("slafail", slafail),
+            Metric("fulldur", full_duration, uom="s"),
+            Metric("loaddur", load_duration, uom="s"),
+        ]
 
 
 @osnag.guarded

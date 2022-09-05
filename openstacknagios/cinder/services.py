@@ -25,6 +25,7 @@ This corresponds to the output of 'cinder service-list'.
 """
 
 from cinderclient.client import Client
+from nagiosplugin.metric import Metric
 
 import openstacknagios.openstacknagios as osnag
 
@@ -42,22 +43,30 @@ class CinderServices(osnag.Resource):
     def probe(self):
         cinder = Client("3", session=self.session)
         result = cinder.services.list()
-        stats = dict(up=0, disabled=0, down=0, total=0)
+
+        services_up = 0
+        services_disabled = 0
+        services_down = 0
+        services_total = 0
 
         for agent in result:
             if (self.host is None or self.host == agent.host) and (
                 self.binary is None or self.binary == agent.binary
             ):
-                stats["total"] += 1
+                services_total += 1
                 if agent.status == "enabled" and agent.state == "up":
-                    stats["up"] += 1
+                    services_up += 1
                 elif agent.status == "disabled":
-                    stats["disabled"] += 1
+                    services_disabled += 1
                 else:
-                    stats["down"] += 1
+                    services_down += 1
 
-        for r in stats.keys():
-            yield osnag.Metric(r, stats[r], min=0)
+        return [
+            Metric("up", services_up, min=0),
+            Metric("disabled", services_disabled, min=0),
+            Metric("down", services_down, min=0),
+            Metric("total", services_total, min=0),
+        ]
 
 
 @osnag.guarded

@@ -24,6 +24,7 @@ Nagios/Icinga plugin to check running nova services
 This corresponds to the output of 'nova service-list'.
 """
 
+from nagiosplugin.metric import Metric
 from novaclient.client import Client
 
 import openstacknagios.openstacknagios as osnag
@@ -44,19 +45,26 @@ class NovaServices(osnag.Resource):
         nova = Client("2.1", session=self.session)
         result = nova.services.list(host=self.host, binary=self.binary)
 
-        stati = dict(up=0, disabled=0, down=0, total=0)
+        services_up = 0
+        services_disabled = 0
+        services_down = 0
+        services_total = 0
 
         for agent in result:
-            stati["total"] += 1
+            services_total += 1
             if agent.status == "enabled" and agent.state == "up":
-                stati["up"] += 1
+                services_up += 1
             elif agent.status == "disabled":
-                stati["disabled"] += 1
+                services_disabled += 1
             else:
-                stati["down"] += 1
+                services_down += 1
 
-        for r in stati.keys():
-            yield osnag.Metric(r, stati[r], min=0)
+        return [
+            Metric("up", services_up, min=0),
+            Metric("disabled", services_disabled, min=0),
+            Metric("down", services_down, min=0),
+            Metric("total", services_total, min=0),
+        ]
 
 
 @osnag.guarded

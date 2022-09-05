@@ -46,8 +46,8 @@ class Summary(NagiosSummary):
     """Create status line with info"""
 
     def __init__(self, show):
+        super().__init__()
         self.show = show
-        NagiosSummary.__init__(self)
 
     def ok(self, results):
         return "[" + " ".join(r + ":" + str(results[r].metric) for r in self.show) + "]"

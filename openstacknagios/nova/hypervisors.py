@@ -24,6 +24,7 @@ Nagios/Icinga plugin to check nova hypervisors
 This corresponds to the output of 'nova hypervisor-stats'
 """
 
+from nagiosplugin.metric import Metric
 from novaclient.client import Client
 
 import openstacknagios.openstacknagios as osnag
@@ -48,20 +49,37 @@ class NovaHypervisors(osnag.Resource):
         else:
             result = nova.hypervisors.statistics()
 
-        yield osnag.Metric("vcpus_used", result.vcpus_used, min=0, max=result.vcpus)
-        yield osnag.Metric(
-            "vcpus_percent", 100 * result.vcpus_used / result.vcpus, min=0, max=100
-        )
-        yield osnag.Metric(
-            "memory_used", result.memory_mb_used, min=0, max=result.memory_mb
-        )
-        yield osnag.Metric(
-            "memory_percent",
-            100 * result.memory_mb_used / result.memory_mb,
-            min=0,
-            max=100,
-        )
-        yield osnag.Metric("running_vms", result.running_vms, min=0)
+        return [
+            Metric(
+                "vcpus_used",
+                result.vcpus_used,
+                min=0,
+                max=result.vcpus,
+            ),
+            Metric(
+                "vcpus_percent",
+                100 * result.vcpus_used / result.vcpus,
+                min=0,
+                max=100,
+            ),
+            Metric(
+                "memory_used",
+                result.memory_mb_used,
+                min=0,
+                max=result.memory_mb,
+            ),
+            Metric(
+                "memory_percent",
+                100 * result.memory_mb_used / result.memory_mb,
+                min=0,
+                max=100,
+            ),
+            Metric(
+                "running_vms",
+                result.running_vms,
+                min=0,
+            ),
+        ]
 
 
 @osnag.guarded

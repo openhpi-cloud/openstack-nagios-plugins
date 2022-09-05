@@ -23,6 +23,7 @@ Nagios plugin to check panko events
 
 import time
 
+from nagiosplugin.metric import Metric
 from pankoclient.v2.client import Client
 
 import openstacknagios.openstacknagios as osnag
@@ -41,7 +42,7 @@ class PankoEvents(osnag.Resource):
 
         get_time = time.time()
 
-        yield osnag.Metric("gettime", get_time - start, min=0)
+        return Metric("gettime", get_time - start, min=0)
 
 
 @osnag.guarded
