@@ -49,7 +49,11 @@ def command_definition_action(resource_class: Type):
 
 
 def generate_command_definition(resource_class: Type, parser: ArgumentParser):
-    check_name = re.sub(r"(?<!^)(?=[A-Z])", "-", resource_class.__name__).lower()
+    check_name = re.sub(
+        r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])",
+        "-",
+        resource_class.__name__,
+    ).lower()
     check_path = f"/usr/lib/nagios/plugins/check_{check_name.replace('-', '_')}"
     arg_prefix = check_name.replace("-", "_")
 
