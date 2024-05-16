@@ -1,6 +1,7 @@
 __pycache__
 __pypackages__
 .mypy_cache
+.pdm-python
 .pdm.toml
 *.pyc
 build
