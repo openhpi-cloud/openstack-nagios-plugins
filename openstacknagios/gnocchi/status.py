@@ -29,7 +29,6 @@ from argparse import ArgumentParser, Namespace, _ArgumentGroup
 from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
-from nagiosplugin.runtime import guarded
 
 import openstacknagios.openstacknagios as osnag
 from openstacknagios.gnocchi.gnocchi import Gnocchi

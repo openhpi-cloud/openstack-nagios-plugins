@@ -18,13 +18,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import argparse
-import re
 import sys
-from argparse import SUPPRESS, ArgumentParser, Namespace, _ArgumentGroup
-from email.policy import default
-from pprint import pprint
-from typing import Any, Dict, Type
+from argparse import ArgumentParser, Namespace, _ArgumentGroup
+from typing import Type
 
 import nagiosplugin
 import openstack
