@@ -1,7 +1,7 @@
 # pylint: disable=missing-docstring
 
 import re
-from argparse import SUPPRESS, ArgumentParser
+from argparse import SUPPRESS, Action, ArgumentParser
 from typing import Any, Type
 
 ICINGA_ARGUMENTS_IGNORE = (
@@ -28,6 +28,24 @@ ICINGA_ESCAPE = str.maketrans(
         "\f": r"\f",
     }
 )
+
+
+def command_definition_action(resource_class: Type):
+    class PrintCommentDefinition(Action):
+        def __init__(self, option_strings, **_kwargs):
+            super().__init__(
+                option_strings=option_strings,
+                dest=SUPPRESS,
+                default=SUPPRESS,
+                nargs=0,
+                help=SUPPRESS,
+            )
+
+        def __call__(self, parser, namespace, values, option_string=None):
+            print(generate_command_definition(resource_class, parser))
+            parser.exit()
+
+    return PrintCommentDefinition
 
 
 def generate_command_definition(resource_class: Type, parser: ArgumentParser):

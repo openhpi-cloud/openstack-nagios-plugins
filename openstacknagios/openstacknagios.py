@@ -32,7 +32,7 @@ from nagiosplugin import Resource as NagiosResource
 from nagiosplugin import Summary as NagiosSummary
 from openstack.config.cloud_region import CloudRegion
 
-from openstacknagios.icinga import generate_command_definition
+from openstacknagios import icinga
 
 
 class Resource(NagiosResource):
@@ -125,13 +125,8 @@ def run_check(resource_class: Type[Resource]):
 
     parser.add_argument(
         "--print-command-definition",
-        action="store_true",
+        action=icinga.command_definition_action(resource_class),
     )
-
-    # Parse once to check if --print-command-definition has been
-    # specified. We parse here, to avoid having required arguments added
-    # later being required to print the command definition.
-    args, _ = parser.parse_known_args()
 
     # Argument group for check arguments
     options = parser.add_argument_group("Check Options")
@@ -168,13 +163,6 @@ def run_check(resource_class: Type[Resource]):
 
     # Add OpenStack arguments to our parser
     config.register_argparse_arguments(parser, sys.argv)
-
-    # If --print-command-definition has been parsed above, stop
-    # processing and generate an icinga command definition based on all
-    # added checks.
-    if args.print_command_definition:
-        print(generate_command_definition(resource_class, parser))
-        sys.exit(0)
 
     # Finally parse all arguments
     args = parser.parse_args()
