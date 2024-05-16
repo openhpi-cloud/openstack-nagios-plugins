@@ -1,0 +1,18 @@
+Source: openstack-nagios-plugins
+Maintainer: Jan Graichen <jan.graichen@hpi.de>
+Section: python
+Priority: optional
+Build-Depends: debhelper-compat (= 13),
+               dh-sequence-python3,
+               pybuild-plugin-pyproject,
+               python3,
+               python3-pdm-pep517
+Standards-Version: 4.6.2
+Homepage: https://github.com/openhpi-cloud/openstack-nagios-plugins
+Rules-Requires-Root: no
+
+Package: openstack-nagios-plugins
+Architecture: all
+Depends: ${misc:Depends},
+         ${python3:Depends}
+Description: OpenStack check plugins

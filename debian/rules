@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+include /usr/share/dpkg/pkg-info.mk
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+execute_after_dh_python3:
+	mkdir -p debian/openstack-nagios-plugins/usr/lib/nagios/plugins
+	mv debian/openstack-nagios-plugins/usr/bin/check_* debian/openstack-nagios-plugins/usr/lib/nagios/plugins
+	rmdir debian/openstack-nagios-plugins/usr/bin

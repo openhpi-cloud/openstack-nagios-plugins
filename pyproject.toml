@@ -1,5 +1,5 @@
 [project]
-name = "openstack-checks"
+name = "openstack-nagios-plugins"
 version = "2.0.0"
 description = "nagios/icinga plugins to monitor an openstack installation"
 authors = [
