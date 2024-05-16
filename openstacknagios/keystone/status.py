@@ -88,5 +88,9 @@ class KeystoneStatus(osnag.Resource):
         )
 
 
-if __name__ == "__main__":
+def main():
     osnag.run_check(KeystoneStatus)
+
+
+if __name__ == "__main__":
+    main()

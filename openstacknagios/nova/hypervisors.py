@@ -191,5 +191,9 @@ class NovaHypervisors(osnag.Resource):
         )
 
 
-if __name__ == "__main__":
+def main():
     osnag.run_check(NovaHypervisors)
+
+
+if __name__ == "__main__":
+    main()

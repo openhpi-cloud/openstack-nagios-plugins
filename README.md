@@ -1,27 +1,15 @@
 # openstack-nagios-plugins
 
-Nagios/icinga plugins to monitor an openstack installation.
-
-Find also some information about these plugins in the talk
-[Monitoring an Openstack Cluster with icinga/nagios](https://www.cirrax.com/downloads/2015_OpenstackMonitoring.pdf)
-held at the 11th Swiss OpenStack User Group Meetup by [Cirrax](https://www.cirrax.com).
+Nagios/Icinga2 plugins to monitor an OpenStack installation.
 
 For all checks there are some common arguments:
 
-```
-  -h, --help            show help message and all arguments
-  --filename FILENAME   File to read openstack credentials from. If not set it
-                        takes the standard environment variables from openstack.
-  -v, --verbose         increase output verbosity (use up to 3 times)(not
-                        everywhere implemented)
-  --cacert CACERT       Specify a CA bundle file to use in verifying a
-                        TLS(https) server certificate.
-  --insecure            Explicitly allow to perform "insecure" SSL
-                        (https) requests. The server's certificate will not be
-                        verified against any certificate authorities. This
-                        option should be used with caution.
-  --timeout TIMEOUT     amount of seconds until execution stops with unknow
-                        state (default 10 seconds)
+```plaintext
+  -h, --help              show help message and all arguments
+  -v, --verbose           increase output verbosity (use up to 3 times)(not
+                          everywhere implemented)
+  --check-timeout TIMEOUT amount of seconds until execution stops with unknow
+                          state (default 10 seconds)
 ```
 
 Currently the following checks are implemented:

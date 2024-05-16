@@ -175,5 +175,9 @@ class CeilometerStatistics(osnag.Resource):
         )
 
 
-if __name__ == "__main__":
+def main():
     osnag.run_check(CeilometerStatistics)
+
+
+if __name__ == "__main__":
+    main()

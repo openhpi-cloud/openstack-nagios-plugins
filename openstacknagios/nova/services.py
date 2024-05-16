@@ -129,5 +129,9 @@ class NovaServices(osnag.Resource):
         )
 
 
-if __name__ == "__main__":
+def main():
     osnag.run_check(NovaServices)
+
+
+if __name__ == "__main__":
+    main()

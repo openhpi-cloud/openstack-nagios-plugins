@@ -91,5 +91,9 @@ class GnocchiStatus(Gnocchi):
         )
 
 
-if __name__ == "__main__":
+def main():
     osnag.run_check(GnocchiStatus)
+
+
+if __name__ == "__main__":
+    main()

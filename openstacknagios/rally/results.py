@@ -169,5 +169,9 @@ class RallyResults(osnag.Resource):
         )
 
 
-if __name__ == "__main__":
+def main():
     osnag.run_check(RallyResults)
+
+
+if __name__ == "__main__":
+    main()

@@ -95,6 +95,10 @@ class Resource(NagiosResource):
                 )
         """
 
+    @classmethod
+    def run(cls):
+        run_check(cls)
+
 
 class Summary(NagiosSummary):
     """Create status line with info"""

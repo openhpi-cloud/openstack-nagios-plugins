@@ -106,5 +106,9 @@ class GnocchiMeasures(gnocchi.Gnocchi):
         )
 
 
-if __name__ == "__main__":
+def main():
     osnag.run_check(GnocchiMeasures)
+
+
+if __name__ == "__main__":
+    main()
