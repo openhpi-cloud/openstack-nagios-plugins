@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # pylint: disable=missing-docstring
 
 #    Copyright (C) 2016  Jordan Tardif  http://github.com/jordant
