@@ -35,7 +35,7 @@ from nagiosplugin.check import Check
 from nagiosplugin.context import ScalarContext
 from nagiosplugin.metric import Metric
 from openstack.config.cloud_region import CloudRegion
-from pytz import timezone
+from zoneinfo import ZoneInfo
 
 import openstacknagios.openstacknagios as osnag
 
@@ -49,7 +49,7 @@ class CeilometerStatistics(osnag.Resource):
         super().__init__(check, args, region)
         self.meter = args.meter
         self.tframe = datetime.timedelta(minutes=int(args.tframe))
-        self.tzone = timezone(args.tzone)
+        self.tzone = ZoneInfo(args.tzone)
         self.verbose = args.verbose
         self.aggregate = args.aggregate
 
