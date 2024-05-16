@@ -1,6 +1,6 @@
 [project]
-name = "openstacknagios"
-version = "1.5.0"
+name = "openstack-checks"
+version = "2.0.0"
 description = "nagios/icinga plugins to monitor an openstack installation"
 authors = [
     { name = "Jan Graichen", email = "jan.graichen@hpi.de" },
