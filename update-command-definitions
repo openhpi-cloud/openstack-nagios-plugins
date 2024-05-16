@@ -21,13 +21,15 @@ CHECKS=(
 )
 
 echo "# vim: ft=icinga" > "$FILE"
-echo <<-EOF >> "$FILE"
+cat <<-EOF >> "$FILE"
 
 /* command objects for the nagios-openstack-plugins
  * used by icinga2
  *
  * Copyright (C) 2018  Cirrax GmbH  http://www.cirrax.com
- * Benedikt Trefzer <benedikt.trefzer@cirrax.com>
+ *                     Benedikt Trefzer <benedikt.trefzer@cirrax.com>
+ * Copyright (C) 2024  HPI  https://hpi.de
+ *                     Jan Graichen <jan.graichen@hpi.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +48,6 @@ echo <<-EOF >> "$FILE"
 
 EOF
 
-for check in ${CHECKS[@]}; do
+for check in "${CHECKS[@]}"; do
     PYTHONPATH=. pdm run python "$check" --print-command-definition >> "$FILE"
 done
