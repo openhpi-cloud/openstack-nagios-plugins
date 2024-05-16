@@ -74,9 +74,9 @@ class NeutronNetworkIPAvailability(osnag.Resource):
         )
         options.add_argument(
             "-n",
-            "--network_uuid",
+            "--network",
             required=True,
-            help="network_uuid to check",
+            help="The network to check",
         )
 
 
